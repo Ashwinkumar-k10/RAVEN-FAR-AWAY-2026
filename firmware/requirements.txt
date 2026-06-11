@@ -1,0 +1,6 @@
+transitions==0.9.0
+requests==2.32.2
+gTTS==2.5.1
+pygame==2.5.2
+ollama==0.2.1
+pyserial==3.5

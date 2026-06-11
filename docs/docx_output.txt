@@ -1,0 +1,593 @@
+
+
+RAVEN
+Rapid Autonomous Victim Emergency Network
+FAR AWAY 2026  •  Theme: Agentic & Autonomous Systems  •  Submission: 14 June 2026
+
+Theme
+Agentic & Autonomous
+Deadline
+14 June 2026, 11:59 PM IST
+MVP Strategy
+Static drone + full AI pipeline
+
+
+
+Section 1 — Problem Statement
+
+1.1  The Human Cost
+Road accidents are one of the leading causes of fatalities in India, resulting in over 1,50,000 deaths annually. Medical research consistently shows that nearly 50% of these deaths are preventable if emergency medical assistance reaches victims within the Golden Hour — the critical 60-minute window following trauma when intervention saves lives.
+
+The tragedy is not a lack of emergency services. It is a systemic delay in reaching them. In India’s highway corridors and urban outskirts, accidents often occur in locations with no witnesses, no functional lighting, poor cellular coverage, and high traffic congestion. Victims lie unattended for critical minutes — sometimes hours — while the clock on their survival runs down.
+
+1.2  Why current systems fail
+Detection depends on humans: accidents must be seen, recognised, and reported by a bystander before any response begins
+Reporting is unreliable: panic, language barriers, and poor connectivity cause delayed or inaccurate emergency calls
+Dispatch is sequential: call centre receives report, verifies, contacts ambulance, ambulance navigates traffic — each step adds minutes
+No autonomous first responder exists that can reach a victim, assess severity, provide guidance, and dispatch help simultaneously
+Golden Hour violations are the norm, not the exception, on Indian national highways
+
+1.3  Problem Statement — One Line
+How do we build an autonomous aerial first-responder that detects road accidents without human notification, assesses victim severity, provides immediate on-site first-aid guidance, and dispatches emergency services — all within 90 seconds, without any human trigger?
+
+1.4  Scale of the problem
+Metric
+India figure
+Source
+Annual road accident deaths
+1,50,000+
+MoRTH 2023
+Deaths preventable within Golden Hour
+~75,000 (50%)
+WHO Trauma Report
+Average emergency response time (urban)
+18–25 minutes
+NITI Aayog 2022
+Average emergency response time (highway)
+35–60+ minutes
+IRC estimate
+Accidents on National Highways
+31% of total
+MoRTH 2023
+Hit-and-run cases annually
+60,000+
+NCRB 2023
+
+
+Section 2 — Proposed Solution: RAVEN
+
+2.1  Solution Overview
+RAVEN — Rapid Autonomous Victim Emergency Network — is an AI-powered autonomous drone-based emergency first-responder system. It continuously patrols accident-prone highway corridors and urban roads, autonomously detects road accidents using computer vision, assesses victim conditions through AI triage, provides immediate voice-guided first-aid assistance, deploys emergency supplies via a servo-triggered payload mechanism, and simultaneously dispatches alerts to ambulances, hospitals, and traffic authorities — without any human trigger or intervention.
+
+The entire detect-to-dispatch pipeline completes in under 90 seconds. RAVEN does not replace ambulances. It fills the critical gap between when an accident happens and when human responders arrive — the window where lives are currently being lost.
+
+2.2  MVP strategy for Round 1
+For Round 1 submission, RAVEN’s drone is mounted on a static stand. The full AI pipeline — detection, triage, voice guidance, payload release, dispatch, and dashboard — runs live on real hardware. The drone does not need to fly autonomously to demonstrate the intelligence layer. Judges evaluate the AI agent, not the flight controller. Autonomous flight is the Round 2 upgrade.
+
+2.3  End-to-end autonomous workflow
+A camera feed enters the Raspberry Pi 4 / Jetson Nano. YOLOv8 Nano processes frames in real time, detecting collisions, overturned vehicles, victims lying on the road, smoke, and fire. On detection, the 7-state autonomous agent FSM activates. The triage agent counts victims, estimates posture and injury severity, and computes a 0–100 severity score. The decision engine selects the response tier, triggers gTTS voice guidance through the speaker, commands the MG996R servo to release the first-aid payload kit, sends GPS coordinates and incident data to the FastAPI backend, fires an SMS alert via Africa’s Talking, and streams live data to the React operator dashboard — all autonomously.
+
+
+Section 3 — System Architecture
+
+RAVEN’s architecture is structured into six layers. The autonomous agent layer (Layer 3) is the central intelligence — it receives perception data, makes all decisions, and coordinates every downstream action without human input.
+
+L1
+Perceive
+Camera: OV5647 Pi Camera or USB webcam, 1080p, 30 fps continuous capture
+Thermal: MLX90614 IR sensor — detects fire, heat signatures from victims
+GPS: Neo-6M / M8N module — continuous location fix, logged at 1 Hz
+Ultrasonic: HC-SR04 — obstacle detection for future autonomous navigation
+↓
+L2
+Detect
+YOLOv8 Nano: Real-time object detection — collision, overturned vehicle, victim lying, smoke, fire
+OpenCV: HSV-based fire/smoke mask, frame pre-processing, ROI extraction
+Victim counting: Bounding box enumeration per detection frame, temporal smoothing
+Posture estimation: Bounding box aspect ratio heuristic to classify standing vs lying down
+↓
+L3
+Autonomous Agent FSM
+7-state FSM: PATROL → DETECT → ASSESS → COMMUNICATE → DEPLOY → DISPATCH → RELAY
+Severity scoring: 0–100 composite score: victim count (40%), posture (30%), fire/smoke (20%), vehicle damage (10%)
+Decision engine: Maps severity score to response tier: Minor (<30), Serious (31–70), Critical (>70)
+Action selection: Autonomously selects language, payload trigger, dispatch priority, alert urgency
+Confidence gate: Detection confidence <0.70 → agent continues patrolling, does not trigger false alarm
+↓
+L4
+Communicate & Act
+Voice guidance: gTTS generates contextual first-aid audio in English, Hindi, Tamil. Speaker plays on arrival.
+LLM guidance: Ollama + Mistral 7B (local, offline) generates adaptive scene-specific instructions
+Payload release: MG996R servo releases kit containing bandages, tourniquet, gauze, emergency blanket
+SMS alert: Africa’s Talking API sends GPS, victim count, severity score to ambulance and hospital
+Webhook: FastAPI endpoint pushes structured incident JSON to dashboard in real time
+↓
+L5
+Hardware Body
+Flight computer: Raspberry Pi 4 (4 GB) — primary AI inference and agent runtime
+Drone frame: 450mm quadcopter frame or F450 — mounts all payload and electronics
+Custom PCB: KiCad-designed sensor integration board: GPS + IR + ultrasonic + servo headers
+Power: 3S/4S LiPo battery, PDB, XT60 connectors, 5V BEC for RPi and peripherals
+CAD payload bay: FreeCAD-designed first-aid kit housing with servo-actuated release latch, 3D-printed PETG
+↓
+L6
+Dashboard & Monitor
+React frontend: Real-time operator interface — live drone GPS, incident feed, severity score, victim count
+Leaflet.js + OSM: Open-source map tiles — drone position pin, incident location, ambulance ETA overlay
+WebSocket: FastAPI WebSocket pushes live updates to dashboard without polling
+PostgreSQL: Incident log database — stores all accident records, timestamps, severity, outcomes
+Incident report: Auto-generated PDF report: GPS, victim count, severity, actions taken, response time
+
+
+Section 4 — Autonomous Agent: 7-State FSM
+
+The autonomous agent is the core intelligence of RAVEN. It is implemented as a Python finite state machine that runs continuously on the Raspberry Pi. It perceives, decides, and acts without any human input across seven states.
+
+State
+Trigger
+Agent action
+Next state
+PATROL
+System start / reset
+Continuous camera scan at 30fps, GPS logging, thermal idle scan
+DETECT on accident
+DETECT
+YOLOv8 confidence >0.70
+Lock detection, count victims, classify vehicle damage, log GPS
+ASSESS immediately
+ASSESS
+Detection confirmed
+Compute severity score (0–100), classify tier (Minor/Serious/Critical)
+COMMUNICATE always
+COMMUNICATE
+Assessment complete
+Select language, generate gTTS audio, play first-aid instructions via speaker
+DEPLOY always
+DEPLOY
+Communication started
+Trigger MG996R servo, release first-aid payload at safe drop zone
+DISPATCH always
+DISPATCH
+Payload released
+POST to FastAPI: GPS, severity, victim count, timestamp, live feed URL; Africa’s Talking SMS
+RELAY always
+RELAY
+Dispatch confirmed
+Maintain overhead position, stream live video, act as navigation beacon until responders arrive
+PATROL on clear
+
+4.1  Severity scoring formula
+Severity Score = (victim_count_score x 0.40) + (posture_score x 0.30) + (fire_smoke_score x 0.20) + (vehicle_damage_score x 0.10)   |   Score 0–30 = Minor · 31–70 = Serious · 71–100 = Critical
+
+4.2  Confidence gate — false alarm prevention
+The agent only transitions from PATROL to DETECT if YOLOv8 detection confidence exceeds 0.70 AND the detection persists across 3 consecutive frames (600ms at 5fps inference). Single-frame detections, low-confidence blips, and environmental false triggers (parked vehicles, shadows) are filtered out. This is the mechanism that makes RAVEN deployable on real roads without flooding emergency services with false alarms.
+
+
+Section 5 — Module Implementation Details
+
+M1
+Accident Detection Module
+P
+Purpose: Detect road accidents automatically and reliably in real-time video.
+T
+Technologies: YOLOv8 Nano (Ultralytics, AGPL v3), OpenCV (Apache 2.0), Python 3.10
+W
+How it works: Camera streams frames to YOLOv8 Nano running on RPi 4. Model detects: collided vehicles, overturned vehicles, victims on road, smoke, fire. Custom fine-tuned on accident dataset (COCO + Roboflow accident images). Inference at 5–8 fps on RPi 4. Confidence gate at 0.70 prevents false positives.
+
+M2
+Victim Assessment & AI Triage
+P
+Purpose: Estimate incident severity to determine autonomous response priority.
+T
+Technologies: Python, NumPy, OpenCV, custom severity scoring logic
+W
+How it works: Victim count from YOLOv8 bounding boxes. Posture classified by bounding box aspect ratio (height > width = standing, width > height = lying). Fire/smoke detected by HSV colour mask (red/orange/grey ranges). Vehicle damage estimated by detection class. All scores combined into 0–100 severity index.
+
+M3
+Autonomous Decision Engine
+P
+Purpose: Run the 7-state FSM and coordinate all autonomous actions.
+T
+Technologies: Python state machine (transitions library, MIT), FastAPI (MIT), asyncio
+W
+How it works: Python FSM library manages state transitions. Each state has entry/exit actions and guard conditions. The engine runs as an async event loop on RPi 4, processing perception events and issuing action commands. All decisions logged with timestamp for post-incident review.
+
+M4
+Voice Guidance System
+P
+Purpose: Provide first-aid instructions to victims and bystanders before medical teams arrive.
+T
+Technologies: gTTS (MIT), Ollama + Mistral 7B (MIT/Apache 2.0), speaker module, pygame (LGPL)
+W
+How it works: Severity score and victim context sent to Mistral 7B via Ollama (runs fully offline on RPi 4 / Jetson Nano). LLM generates scene-specific first-aid instructions. gTTS converts to audio in English, Hindi, or Tamil based on GPS location zone. pygame plays audio through speaker. Example: ‘Two victims detected. Do not move the injured. Apply pressure to visible wounds. Emergency services notified. Help is 8 minutes away.’
+
+M5
+First-Aid Payload Deployment
+P
+Purpose: Deliver emergency medical supplies immediately to the accident scene.
+T
+Technologies: MG996R servo, RPi GPIO, FreeCAD-designed payload bay (PETG 3D print)
+W
+How it works: Payload bay designed in FreeCAD and 3D-printed in PETG. Contains: bandages, tourniquet, gauze pads, emergency blanket, whistle. MG996R servo controlled via RPi GPIO PWM. Agent sends servo release command on entering DEPLOY state. Drop zone calculated from camera depth estimation.
+
+M6
+Emergency Dispatch System
+P
+Purpose: Autonomously notify emergency services with structured incident data.
+T
+Technologies: FastAPI (MIT), Africa’s Talking SMS API (free tier), Python httpx (BSD)
+W
+How it works: FastAPI endpoint receives POST from agent with: GPS coordinates, victim count, severity score, timestamp, live feed URL. Africa’s Talking SMS sends structured alert to registered ambulance and hospital numbers. All dispatch events logged in PostgreSQL. Webhook also available for future integration with 108 helpline systems.
+
+M7
+Operator Dashboard
+P
+Purpose: Provide real-time situational awareness to emergency operators.
+T
+Technologies: React (MIT), Leaflet.js + OpenStreetMap (BSD-2 / ODbL), WebSocket, FastAPI, PostgreSQL
+W
+How it works: React frontend connects to FastAPI WebSocket for live updates. Leaflet.js renders drone GPS position and incident location on OSM map. Dashboard panels: live video feed, severity score, victim count, dispatch status, ambulance ETA, incident history. All data persisted in PostgreSQL for post-incident analytics.
+
+
+Section 6 — PCB Design Plan
+
+One custom PCB is designed in KiCad — the RAVEN sensor integration board. It connects the GPS module, IR thermal sensor, ultrasonic sensors, servo, speaker amplifier, and status LEDs to the Raspberry Pi 4 via a single clean interface. Physical fabrication is not required for Round 1 — Gerber files and schematic PDF are submitted in the GitHub repo.
+
+Custom PCB components (KiCad)
+PCB design decisions
+40-pin RPi GPIO header (pass-through)
+Neo-6M GPS UART breakout (TX/RX pins)
+MLX90614 IR sensor I2C header
+HC-SR04 ultrasonic x2 (trigger/echo)
+MG996R servo PWM signal header
+PAM8403 3W audio amplifier IC
+WS2812B LED signal header (status beacon)
+5V / 3.3V LDO regulators + bypass caps
+Screw terminals for external power input
+Board size: ~80mm x 55mm, 2-layer
+All sensors on one board — single ribbon to RPi
+Pull-up resistors on I2C lines (4.7kΩ)
+PWM filter cap on servo signal line
+Ground plane on bottom layer for EMI reduction
+Test points on all signal lines for debugging
+XT30 power connector for drone PDB integration
+KiCad schematic time: ~3 hours
+PCB layout + routing: ~4 hours
+Gerber export: 30 minutes
+No fabrication needed for MVP submission
+
+
+Section 7 — CAD Scope — Payload Bay
+
+The payload bay is designed from scratch in FreeCAD 0.21 (LGPL v2+). It mounts to the drone frame undercarriage and houses the first-aid kit with a servo-actuated release latch.
+
+CAD design scope (FreeCAD)
+Materials & print settings
+Rectangular payload box: 120mm x 80mm x 60mm
+Servo horn linkage to hinged bottom door
+Tool-free release: servo rotates 90° → door opens
+Drone frame mounting bracket (M3 bolt pattern)
+Cable management channel for servo wire
+Ventilation slots for thermal sensor line-of-sight
+Snap-fit lid for payload reload
+Material: PETG (impact-resistant, weather-tolerant)
+Layer height: 0.2mm
+Infill: 30% gyroid for structural parts
+TPU door seal gasket (weather resistance)
+Print time: ~4–5 hours total
+Deliverables: STL + STEP + FreeCAD source
+All files in /cad folder of GitHub repo
+
+
+Section 8 — Open-Source Tool Stack (Fully Compliant)
+
+Every tool, library, framework, and model used in RAVEN is open-source with a verified licence. Proprietary tools from earlier drafts (Twilio, Claude API, MATLAB) have been replaced.
+
+Component / role
+Open-source tool
+Licence
+Replaces (proprietary)
+Object detection
+YOLOv8 Nano — Ultralytics
+AGPL v3
+Commercial CV APIs
+Computer vision
+OpenCV
+Apache 2.0
+—
+AI inference runtime
+ONNX Runtime / TFLite
+MIT / Apache 2.0
+Proprietary edge SDKs
+LLM — voice guidance
+Ollama + Mistral 7B (local)
+MIT / Apache 2.0
+Claude API (paid)
+Text-to-speech
+gTTS
+MIT
+Google Cloud TTS (paid)
+Audio playback
+pygame
+LGPL
+—
+Agent state machine
+transitions (Python)
+MIT
+—
+Backend API
+FastAPI
+MIT
+—
+SMS dispatch
+Africa's Talking API (free tier)
+Free tier
+Twilio (paid SaaS)
+Frontend framework
+React
+MIT
+—
+Maps
+Leaflet.js + OpenStreetMap
+BSD-2 / ODbL
+Google Maps (paid)
+Database
+PostgreSQL
+PostgreSQL Lic.
+—
+PCB design
+KiCad 7.0
+GPL v3
+Altium / EasyEDA Pro
+3D CAD
+FreeCAD 0.21
+LGPL v2+
+Fusion 360 (proprietary)
+3D slicer
+PrusaSlicer / Cura
+AGPL / LGPL
+Simplify3D (paid)
+Firmware / OS
+Raspberry Pi OS (Debian)
+GPL v2
+—
+Version control
+Git + GitHub
+GPL v2 / TOS
+—
+Data analysis
+Python + NumPy + SciPy
+BSD
+MATLAB (paid)
+Training dataset
+Roboflow accident dataset (public)
+CC BY 4.0
+—
+Documentation
+Markdown + draw.io
+MIT / Apache 2.0
+—
+
+
+Section 9 — 7-Day Build Schedule
+
+Themes released: 7 June 2026. Deadline: 14 June 2026, 11:59 PM IST. Days 8–13 June are build days. Day 14 June is the submission buffer — never submit on deadline day.
+
+Day 1
+8 Jun
+System setup + environment
+Set up GitHub repo (/firmware, /pcb, /cad, /ml, /app, /docs). Install RPi OS, Python, OpenCV, Ultralytics, FastAPI. Verify camera feed. Assign team roles. Download YOLOv8 Nano base weights.
+
+Day 2
+9 Jun
+YOLOv8 accident detection
+Fine-tune YOLOv8 Nano on accident dataset from Roboflow. Test live detection on camera: collided vehicles, victims lying down. Target: >85% confidence on staged scene. Push model to GitHub /ml.
+
+Day 3
+10 Jun
+Autonomous agent FSM
+Implement 7-state Python FSM using transitions library. Code severity scoring logic. Test full PATROL → RELAY loop on recorded accident video. Implement confidence gate (3-frame persistence, threshold 0.70).
+
+Day 4
+11 Jun
+PCB + hardware integration
+Design sensor integration PCB in KiCad. Wire GPS, IR sensor, servo, speaker on breadboard. Test gTTS voice output and MG996R servo release. Install Ollama + Mistral 7B, test first-aid guidance generation.
+
+Day 5
+12 Jun
+Dispatch + dashboard
+Build FastAPI backend with WebSocket. Build React + Leaflet operator dashboard. Integrate Africa's Talking SMS — test real SMS delivery to phone. Test end-to-end: detection → agent → SMS → dashboard update.
+
+Day 6
+13 Jun
+Full integration + demo video
+Stage accident scene (toy cars, mannequin or person lying down). Run complete pipeline live. Record 2–5 min demo video: detection → triage → voice guidance → payload drop → SMS → dashboard. Film outdoors in daylight.
+
+Day 7
+14 Jun
+Documentation + submit
+Write README. Push KiCad Gerbers, FreeCAD STL/STEP, ML model, all source code. Export final Gerber files from KiCad. Submit GitHub link + video before 11:59 PM IST. Use this day as buffer only.
+
+
+Section 10 — GitHub Repository Structure
+
+Folder structure
+README must include
+/firmware — RPi Python agent FSM + detection
+/pcb — KiCad project + Gerber files + schematic PDF
+/cad — FreeCAD source + STL + STEP files
+/ml — YOLOv8 weights + training notebook + dataset link
+/backend — FastAPI server + WebSocket + DB models
+/frontend — React dashboard source
+/docs — architecture diagram, BOM, wiring diagram
+/demo — demo video link + screenshots
+README.md — full project writeup
+One-line problem statement
+System architecture diagram (image embed)
+Bill of materials with links and prices
+Wiring diagram / pin mapping table
+Setup: RPi OS + Python env + model install
+Backend setup: FastAPI + PostgreSQL
+Frontend setup: React build + run
+SMS setup: Africa's Talking config
+Demo video link (YouTube unlisted)
+
+
+Section 11 — Hardware Bill of Materials
+
+Component
+Purpose
+Qty
+Est. Cost (INR)
+Raspberry Pi 4 (4GB)
+AI inference + agent runtime
+1
+₹4,500
+OV5647 Pi Camera
+Accident detection
+1
+₹600
+Neo-6M GPS module
+Location tracking
+1
+₹350
+MLX90614 IR sensor
+Thermal / fire detection
+1
+₹450
+HC-SR04 ultrasonic x2
+Obstacle detection
+2
+₹200
+MG996R servo motor
+Payload release mechanism
+1
+₹250
+Speaker module + amp
+Voice guidance playback
+1
+₹300
+WS2812B LED strip
+Emergency beacon
+1
+₹150
+F450 quadcopter frame
+Drone body
+1
+₹1,200
+LiPo 3S 2200mAh
+Power supply
+1
+₹1,400
+Custom PCB (KiCad)
+Sensor integration board
+1
+₹400
+PETG filament (~150g)
+Payload bay body
+1 roll
+₹250
+Misc (wires, headers)
+Assembly
+—
+₹300
+Total estimated hardware cost
+~₹10,150
+
+
+Section 12 — Presentation Structure (12 Slides)
+
+Use the video as the primary submission. The presentation is the backup. Every slide must be visual-first — diagrams, photos, live dashboard screenshots, metrics.
+
+#
+Slide title
+What to include
+1
+The problem
+1,50,000 deaths/year. 50% preventable. Golden Hour clock. Real highway photo.
+2
+RAVEN in one sentence
+One-line pitch. Hero photo of drone with payload bay.
+3
+System architecture
+6-layer architecture diagram (Perceive → Detect → Agent → Act → Hardware → Dashboard).
+4
+Autonomous agent FSM
+7-state machine diagram with transitions and agent decisions labelled.
+5
+PCB design
+KiCad schematic screenshot + 3D PCB render.
+6
+CAD payload bay
+FreeCAD render + printed prototype photo side by side.
+7
+YOLOv8 detection
+Detection screenshot on staged accident scene, confidence scores visible.
+8
+Live demo
+Embedded video still or QR code linking to demo video.
+9
+Dispatch & dashboard
+Dashboard screenshot with live map, severity score, SMS alert on phone.
+10
+Impact + scalability
+Response time: 90 sec vs 25 min. Highway deployment map. National scale.
+11
+Bill of materials
+Component table. Total ~₹10,150.
+12
+Future scope
+Autonomous flight (Round 2), multi-drone swarm, NDRF integration, 108 API.
+
+
+Section 13 — FAR AWAY Competition Rule Compliance
+
+FAR AWAY rule
+How RAVEN complies
+Status
+Teams of 1–5 members
+5-member team with defined roles
+✓ Compliant
+Must select one official theme
+Agentic & Autonomous Systems selected
+✓ Compliant
+Must submit GitHub repository
+Repo with /firmware, /pcb, /cad, /ml, /backend, /frontend, README
+✓ Compliant
+PCB / CAD files required for hardware
+KiCad Gerbers + FreeCAD source + STL files in GitHub /pcb and /cad
+✓ Compliant
+Submit presentation OR video
+2–5 min demo video + 12-slide deck as backup
+✓ Compliant
+Open-source libraries and tools only
+All tools verified open-source: see Section 8 compliance table
+✓ Compliant
+No fake demos / must show working implementation
+Live YOLOv8 detection + servo drop + SMS + dashboard on real hardware
+✓ Compliant
+No Arduino + jumper wire only (penalised)
+Custom KiCad PCB designed and documented
+✓ Compliant
+AI tools allowed for code assistance
+AI tools used for code assistance only; all IP is original
+✓ Compliant
+No plagiarism / no copied project
+RAVEN is entirely original; all open-source libraries attributed
+✓ Compliant
+Judges may review commit history
+Daily commits from Day 1; history reflects real build timeline
+✓ Compliant
+Twilio (proprietary SaaS) — removed
+Replaced with Africa's Talking API (free tier, open integration)
+✓ Compliant
+MATLAB / Simulink — removed
+Replaced with Python + NumPy + SciPy throughout
+✓ Compliant
+Claude API (proprietary) — removed
+Replaced with Ollama + Mistral 7B running fully offline on RPi
+✓ Compliant
+
+
+Build boldly. Ship something real.
+FAR AWAY 2026  •  RAVEN  •  Agentic & Autonomous Systems

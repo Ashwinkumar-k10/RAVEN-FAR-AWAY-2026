@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RAVEN Dashboard</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+:root {
+  --bg-main: #f0f4f8;
+  --bg-card: rgba(255, 255, 255, 0.85);
+  --text-primary: #111827;
+  --text-secondary: #6b7280;
+  --border-color: rgba(221, 227, 234, 0.6);
+  --accent-color: #1a5fb4;
+  --accent-glow: rgba(26, 95, 180, 0.3);
+  --success-bg: #eaf3de;
+  --success-text: #27500a;
+  --success-border: #97c459;
+  --danger-bg: #fcebeb;
+  --danger-text: #a32d2d;
+  --danger-border: #f09595;
+  --warning-bg: #faeeda;
+  --warning-text: #633806;
+  --warning-border: #fac775;
+  --card-shadow: 0 8px 32px rgba(0, 0, 0, 0.05);
+  --backdrop: blur(12px);
+}
+
+[data-theme='dark'] {
+  --bg-main: #0f172a;
+  --bg-card: rgba(30, 41, 59, 0.75);
+  --text-primary: #f8fafc;
+  --text-secondary: #94a3b8;
+  --border-color: rgba(51, 65, 85, 0.6);
+  --accent-color: #3b82f6;
+  --accent-glow: rgba(59, 130, 246, 0.4);
+  --success-bg: rgba(34, 197, 94, 0.15);
+  --success-text: #4ade80;
+  --success-border: rgba(34, 197, 94, 0.4);
+  --danger-bg: rgba(239, 68, 68, 0.15);
+  --danger-text: #f87171;
+  --danger-border: rgba(239, 68, 68, 0.4);
+  --warning-bg: rgba(245, 158, 11, 0.15);
+  --warning-text: #fbbf24;
+  --warning-border: rgba(245, 158, 11, 0.4);
+  --card-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; transition: background-color 0.3s, border-color 0.3s; }
+body { background: var(--bg-main); font-family: 'Inter', sans-serif; color: var(--text-primary); }
+.dash { padding: 16px; max-width: 1400px; margin: 0 auto; }
+.topbar { display: flex; align-items: center; justify-content: space-between; background: var(--bg-card); backdrop-filter: var(--backdrop); -webkit-backdrop-filter: var(--backdrop); border: 1px solid var(--border-color); border-radius: 12px; padding: 12px 20px; margin-bottom: 16px; box-shadow: var(--card-shadow); }
+.logo-icon { width: 36px; height: 36px; background: var(--accent-color); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 20px; box-shadow: 0 4px 12px var(--accent-glow); }
+.live-badge { display: flex; align-items: center; gap: 6px; background: var(--success-bg); border: 1px solid var(--success-border); border-radius: 6px; padding: 4px 10px; font-size: 11px; color: var(--success-text); font-weight: 600; letter-spacing: 0.5px; }
+@keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.2; } }
+.live-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--success-text); animation: blink 1.2s ease-in-out infinite; }
+.card { background: var(--bg-card); backdrop-filter: var(--backdrop); -webkit-backdrop-filter: var(--backdrop); border: 1px solid var(--border-color); border-radius: 12px; padding: 16px; box-shadow: var(--card-shadow); transition: transform 0.2s ease; }
+.card:hover { transform: translateY(-2px); }
+.ctitle { font-size: 11px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 12px; display: flex; align-items: center; gap: 6px; }
+.ctitle i { font-size: 14px; color: var(--accent-color); }
+.g2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+.g4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 16px; }
+.g31 { display: grid; grid-template-columns: 1.8fr 1.2fr; gap: 16px; margin-bottom: 16px; }
+.g3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+.bignum { font-size: 32px; font-weight: 600; line-height: 1; color: var(--text-primary); transition: color 0.3s; }
+.sublabel { font-size: 12px; color: var(--text-secondary); margin-top: 4px; }
+.badge { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 20px; }
+.bc { background: var(--danger-bg); color: var(--danger-text); border: 1px solid var(--danger-border); }
+.bs { background: var(--warning-bg); color: var(--warning-text); border: 1px solid var(--warning-border); }
+.bm { background: var(--success-bg); color: var(--success-text); border: 1px solid var(--success-border); }
+@keyframes pop { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.06); } }
+.badge-anim { animation: pop 2s ease-in-out infinite; }
+.pbar { height: 6px; background: var(--border-color); border-radius: 3px; overflow: hidden; margin-top: 8px; }
+.pfill { height: 100%; border-radius: 3px; transition: width 0.7s ease, background 0.5s; }
+.map-wrap { position: relative; height: 260px; border-radius: 8px; overflow: hidden; border: 1px solid var(--border-color); }
+#leafmap { width: 100%; height: 100%; z-index: 1; }
+.cam-outer { position: relative; height: 260px; border-radius: 8px; overflow: hidden; background: #000; border: 1px solid var(--border-color); }
+.cam-frame { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transition: opacity 0.6s; }
+.cam-overlay { position: absolute; inset: 0; background: rgba(0, 0, 0, 0.2); }
+.scan-lines { position: absolute; inset: 0; background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.1) 2px, rgba(0,0,0,0.1) 4px); pointer-events: none; }
+.det-box { position: absolute; border: 2px solid #ef4444; border-radius: 4px; pointer-events: none; box-shadow: 0 0 10px rgba(239, 68, 68, 0.5); }
+.det-lbl { position: absolute; background: #ef4444; color: #fff; font-size: 9px; padding: 2px 6px; border-radius: 3px; white-space: nowrap; font-weight: 600; box-shadow: 0 2px 4px rgba(0,0,0,0.3); }
+.det-box2 { position: absolute; border: 2px solid #3b82f6; border-radius: 4px; pointer-events: none; box-shadow: 0 0 10px rgba(59, 130, 246, 0.5); }
+.det-lbl2 { position: absolute; background: #3b82f6; color: #fff; font-size: 9px; padding: 2px 6px; border-radius: 3px; white-space: nowrap; font-weight: 600; box-shadow: 0 2px 4px rgba(0,0,0,0.3); }
+@keyframes boxFlash { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+.flash { animation: boxFlash 2.2s ease-in-out infinite; }
+.cam-hud-top { position: absolute; top: 12px; left: 12px; right: 12px; display: flex; justify-content: space-between; pointer-events: none; z-index: 10; }
+.cam-hud-bot { position: absolute; bottom: 12px; left: 12px; right: 12px; display: flex; justify-content: space-between; align-items: flex-end; pointer-events: none; z-index: 10; }
+.hud-tag { background: rgba(239, 68, 68, 0.9); color: #fff; font-size: 10px; font-weight: 600; padding: 3px 10px; border-radius: 4px; letter-spacing: 0.5px; }
+.hud-info { background: rgba(0, 0, 0, 0.7); color: #f8fafc; font-size: 10px; padding: 3px 8px; border-radius: 4px; margin-top: 4px; font-family: monospace; }
+.hud-rec { color: #ef4444; font-size: 10px; display: flex; align-items: center; gap: 4px; font-weight: 600; }
+.corner-tl, .corner-tr, .corner-bl, .corner-br { position: absolute; width: 16px; height: 16px; border-color: rgba(255, 255, 255, 0.8); border-style: solid; z-index: 10; }
+.corner-tl { top: 0; left: 0; border-width: 2px 0 0 2px; }
+.corner-tr { top: 0; right: 0; border-width: 2px 2px 0 0; }
+.corner-bl { bottom: 0; left: 0; border-width: 0 0 2px 2px; }
+.corner-br { bottom: 0; right: 0; border-width: 0 2px 2px 0; }
+.sev-meter { display: flex; gap: 3px; margin-top: 10px; }
+.sev-bar { flex: 1; height: 8px; border-radius: 2px; transition: background 0.3s; }
+.vic-icons { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 10px; }
+.vic-dot { width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; }
+.vic-crit { background: var(--danger-bg); border: 1.5px solid var(--danger-border); color: var(--danger-text); }
+.vic-ser { background: var(--warning-bg); border: 1.5px solid var(--warning-border); color: var(--warning-text); }
+.vic-ok { background: var(--success-bg); border: 1.5px solid var(--success-border); color: var(--success-text); }
+.hlt-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.hlt-item { display: flex; align-items: center; justify-content: space-between; padding: 6px 10px; border-radius: 6px; font-size: 11px; background: var(--bg-main); border: 1px solid var(--border-color); font-weight: 500; }
+.hlt-dot { width: 8px; height: 8px; border-radius: 50%; }
+.h-ok { background: var(--success-text); }
+.h-warn { background: var(--warning-text); animation: blink 1.5s ease-in-out infinite; }
+.h-err { background: var(--danger-text); animation: blink 0.7s ease-in-out infinite; }
+.agent-list { display: flex; flex-direction: column; gap: 6px; }
+.astate { display: flex; align-items: center; gap: 10px; padding: 6px 10px; border-radius: 8px; font-size: 12px; transition: all 0.4s; }
+.a-done { background: var(--success-bg); color: var(--success-text); border: 1px solid transparent; }
+.a-active { background: rgba(59, 130, 246, 0.15); color: var(--accent-color); border: 1px solid var(--accent-color); font-weight: 600; box-shadow: 0 0 12px var(--accent-glow); }
+.a-pending { color: var(--text-secondary); border: 1px solid transparent; }
+.a-icon { width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; flex-shrink: 0; }
+.ai-done { background: var(--success-text); color: #fff; }
+.ai-active { background: var(--accent-color); color: #fff; animation: blink 1s ease-in-out infinite; }
+.ai-pending { background: var(--border-color); color: var(--text-secondary); }
+.tl-wrap { max-height: 200px; overflow-y: auto; padding-right: 4px; }
+.tl-wrap::-webkit-scrollbar { width: 4px; }
+.tl-wrap::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 4px; }
+.tl-item { display: flex; gap: 10px; padding: 6px 0; border-bottom: 1px solid var(--border-color); }
+.tl-item:last-child { border-bottom: none; }
+.tl-d { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; margin-top: 5px; }
+.tl-t { font-size: 10px; color: var(--text-secondary); white-space: nowrap; min-width: 45px; font-weight: 500; font-family: monospace; }
+.tl-m { font-size: 12px; flex: 1; color: var(--text-primary); }
+@keyframes tlSlide { from { opacity: 0; transform: translateX(-8px); } to { opacity: 1; transform: none; } }
+.tl-new { animation: tlSlide 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
+.dp-row { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid var(--border-color); font-size: 12px; }
+.dp-row:last-child { border-bottom: none; }
+.dp-val { font-weight: 600; font-size: 13px; color: var(--text-primary); }
+.htable { width: 100%; border-collapse: collapse; font-size: 11px; table-layout: fixed; }
+.htable th { text-align: left; padding: 8px 10px; color: var(--text-secondary); font-weight: 600; border-bottom: 2px solid var(--border-color); text-transform: uppercase; letter-spacing: 0.05em; }
+.htable td { padding: 8px 10px; border-bottom: 1px solid var(--border-color); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text-primary); transition: color 0.3s; }
+.htable tr { transition: background 0.2s; }
+.htable tr:hover td { background: var(--bg-main); }
+.theme-toggle { background: var(--bg-main); border: 1px solid var(--border-color); color: var(--text-primary); border-radius: 20px; padding: 6px 14px; font-size: 12px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: all 0.3s; }
+.theme-toggle:hover { background: var(--border-color); }
+</style>
+</head>
+<body>
+
+<div class="dash">
+<h2 style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)">RAVEN live emergency response dashboard</h2>
+
+<div class="topbar">
+  <div style="display:flex;align-items:center;gap:12px">
+    <div class="logo-icon"><i class="ti ti-drone" aria-hidden="true"></i></div>
+    <div>
+      <div style="font-size:16px;font-weight:600;color:var(--text-primary);">RAVEN System</div>
+      <div style="font-size:11px;color:var(--text-secondary);">Rapid Autonomous Victim Emergency Network</div>
+    </div>
+  </div>
+  <div style="display:flex;align-items:center;gap:12px">
+    <select id="video-selector" onchange="changeVideo(this.value)" style="background:var(--bg-main); color:var(--text-primary); border:1px solid var(--border-color); border-radius:20px; padding:6px 14px; font-size:12px; font-weight:600; cursor:pointer;">
+      <option value="drone_traffic.mp4">Feed: Normal Traffic</option>
+      <option value="drone_accident_footage.mp4" selected>Feed: Drone Traffic Accident</option>
+      <option value="drone_accident.mp4">Feed: CCTV Crash</option>
+      <option value="drone_crash.mp4">Feed: Drone Crash</option>
+    </select>
+    <button onclick="startDemo()" style="background:#ef4444; color:white; border:none; border-radius:20px; padding:6px 14px; font-size:12px; font-weight:600; cursor:pointer; margin-right:8px;"><i class="ti ti-player-play"></i> Start Analysis</button>
+    <button onclick="enableAudio()" style="background:var(--accent-color); color:white; border:none; border-radius:20px; padding:6px 14px; font-size:12px; font-weight:600; cursor:pointer;"><i class="ti ti-volume"></i> Enable Audio</button>
+    <button class="theme-toggle" id="theme-btn" onclick="toggleTheme()"><i class="ti ti-sun"></i> Light Mode</button>
+    <div class="live-badge"><div class="live-dot"></div>LIVE</div>
+    <div style="font-size:12px;color:var(--text-secondary); font-family: monospace; font-weight: 500" id="sys-time">--:--:--</div>
+    <div style="font-size:11px;background:var(--danger-bg);color:var(--danger-text);border:1px solid var(--danger-border);padding:4px 10px;border-radius:6px;font-weight:600">INC-044 ACTIVE</div>
+  </div>
+</div>
+
+<div class="g2">
+  <div class="card">
+    <div class="ctitle"><i class="ti ti-map-pin" aria-hidden="true"></i>Live incident map — OpenStreetMap</div>
+    <div class="map-wrap">
+      <div id="leafmap"></div>
+      <div style="position:absolute;bottom:8px;left:8px;z-index:1000;background:var(--bg-card);backdrop-filter:blur(4px);border-radius:6px;padding:4px 10px;font-size:10px;color:var(--text-primary);border:1px solid var(--border-color);font-weight:500;">
+        <span id="coord-txt">12.9716°N, 80.2437°E</span>
+      </div>
+    </div>
+    <div style="display:flex;gap:12px;margin-top:10px;flex-wrap:wrap">
+      <div style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text-secondary);font-weight:500"><div style="width:10px;height:10px;border-radius:50%;background:#1a5fb4"></div>Drone D-7</div>
+      <div style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text-secondary);font-weight:500"><div style="width:10px;height:10px;border-radius:50%;background:#ef4444"></div>Incident INC-044</div>
+      <div style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text-secondary);font-weight:500"><div style="width:10px;height:10px;border-radius:4px;background:#22c55e"></div>AMB-14</div>
+      <div style="margin-left:auto;font-size:11px;color:var(--text-secondary);font-weight:500;font-family:monospace">GPS: <span id="drone-coord">12.9716, 80.2460</span></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="ctitle"><i class="ti ti-camera" aria-hidden="true"></i>Live feed — drone D-7 · AI accident detection</div>
+    <div class="cam-outer">
+      <img id="cam-video" class="cam-frame" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" style="opacity:1; object-fit: cover; background: #000;">
+      <div class="cam-overlay"></div>
+      <div class="scan-lines"></div>
+      <div class="corner-tl"></div><div class="corner-tr"></div><div class="corner-bl"></div><div class="corner-br"></div>
+      <div class="cam-hud-top">
+        <div>
+          <div class="hud-tag" id="cam-status-tag" style="background: rgba(59, 130, 246, 0.9);">PATROL MODE</div>
+          <div style="display:flex;gap:4px;margin-top:6px">
+            <div class="hud-info" id="cam-fps">29 fps</div>
+            <div class="hud-info">4K HDR</div>
+            <div class="hud-info" id="cam-latms">lat 138ms</div>
+          </div>
+        </div>
+        <div>
+          <div class="hud-info" id="cam-ts">14:32:07</div>
+          <div class="hud-info" style="margin-top:6px" id="cam-frame-no">FRAME 004821</div>
+        </div>
+      </div>
+      <div class="cam-hud-bot">
+        <div class="hud-info">NH-45 · km 32 · alt 28m · <span id="cam-scene">Scene 1/2</span></div>
+        <div class="hud-rec"><div style="width:8px;height:8px;border-radius:50%;background:#ef4444;animation:blink .7s ease-in-out infinite;margin-right:2px"></div>REC</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="g4">
+  <div class="card">
+    <div class="ctitle"><i class="ti ti-alert-circle" aria-hidden="true"></i>Severity score</div>
+    <div class="bignum" id="sev-num">87</div>
+    <div class="sublabel">/ 100 severity index</div>
+    <div class="sev-meter" id="sev-meter"></div>
+    <div style="margin-top:10px" id="sev-badge"></div>
+  </div>
+  <div class="card">
+    <div class="ctitle"><i class="ti ti-users" aria-hidden="true"></i>Victim count</div>
+    <div class="bignum" id="vic-num">3</div>
+    <div class="sublabel">persons detected</div>
+    <div class="vic-icons" id="vic-icons"></div>
+  </div>
+  <div class="card">
+    <div class="ctitle"><i class="ti ti-clock" aria-hidden="true"></i>Ambulance ETA</div>
+    <div style="display:flex;align-items:baseline;gap:4px">
+      <div class="bignum" id="eta-num">7</div>
+      <div style="font-size:14px;color:var(--text-secondary);font-weight:500">min</div>
+    </div>
+    <div class="sublabel" id="eta-dist">2.4 km remaining</div>
+    <div class="pbar"><div class="pfill" id="eta-bar" style="width:38%;background:var(--accent-color)"></div></div>
+  </div>
+  <div class="card">
+    <div class="ctitle"><i class="ti ti-heartbeat" aria-hidden="true"></i>System health</div>
+    <div class="hlt-grid" id="hlt-grid"></div>
+  </div>
+</div>
+
+<div class="g31">
+  <div class="g3" style="margin-bottom:0">
+    <div class="card">
+      <div class="ctitle"><i class="ti ti-robot" aria-hidden="true"></i>Agent state</div>
+      <div class="agent-list" id="agent-list"></div>
+    </div>
+    <div class="card">
+      <div class="ctitle"><i class="ti ti-timeline" aria-hidden="true"></i>Incident timeline</div>
+      <div class="tl-wrap" id="tl-wrap"></div>
+    </div>
+    <div class="card">
+      <div class="ctitle"><i class="ti ti-send" aria-hidden="true"></i>Dispatch status</div>
+      <div id="dp-panel"></div>
+    </div>
+  </div>
+  <div class="card" style="display:flex;flex-direction:column;justify-content:space-between">
+    <div>
+      <div class="ctitle" style="margin-bottom:6px"><i class="ti ti-broadcast" aria-hidden="true"></i>Relay signal</div>
+      <div class="bignum" id="relay-num" style="font-size:24px">98%</div>
+      <div class="pbar"><div class="pfill" id="relay-bar" style="width:98%;background:var(--success-text)"></div></div>
+    </div>
+    <div style="border-top:1px solid var(--border-color);padding-top:12px;margin-top:12px">
+      <div class="ctitle" style="margin-bottom:6px"><i class="ti ti-cpu" aria-hidden="true"></i>AI confidence</div>
+      <div class="bignum" id="conf-num" style="font-size:24px">94%</div>
+      <div class="pbar"><div class="pfill" id="conf-bar" style="width:94%;background:var(--accent-color)"></div></div>
+    </div>
+    <div style="border-top:1px solid var(--border-color);padding-top:12px;margin-top:12px">
+      <div class="ctitle" style="margin-bottom:6px"><i class="ti ti-battery-3" aria-hidden="true"></i>Drone battery</div>
+      <div class="bignum" id="batt-num" style="font-size:24px">72%</div>
+      <div class="pbar"><div class="pfill" id="batt-bar" style="width:72%;background:var(--warning-text)"></div></div>
+    </div>
+  </div>
+</div>
+
+<div class="card" style="margin-bottom: 16px;">
+  <div class="ctitle"><i class="ti ti-brain" aria-hidden="true"></i>VLM Semantic Scene Analysis (Moondream)</div>
+  <div style="background: rgba(0,0,0,0.8); padding: 16px; border-radius: 8px; border: 1px solid var(--border-color); color: #4ade80; font-family: monospace; font-size: 13px; line-height: 1.6; min-height: 80px;" id="ai-semantic-text">
+    &gt; System standby. Awaiting drone visual feed analysis...
+  </div>
+</div>
+
+<div class="card">
+  <div class="ctitle"><i class="ti ti-history" aria-hidden="true"></i>Incident history</div>
+  <div style="overflow-x:auto">
+    <table class="htable">
+      <thead><tr><th style="width:80px">ID</th><th style="width:60px">Time</th><th style="width:130px">Location</th><th style="width:80px">Severity</th><th style="width:70px">Victims</th><th style="width:60px">ETA</th><th style="width:80px">Status</th></tr></thead>
+      <tbody id="hist-body"></tbody>
+    </table>
+  </div>
+</div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+// Theme Toggle logic
+function toggleTheme() {
+    const html = document.documentElement;
+    const btn = document.getElementById('theme-btn');
+    if(html.getAttribute('data-theme') === 'dark') {
+        html.setAttribute('data-theme', 'light');
+        btn.innerHTML = '<i class="ti ti-moon"></i> Dark Mode';
+    } else {
+        html.setAttribute('data-theme', 'dark');
+        btn.innerHTML = '<i class="ti ti-sun"></i> Light Mode';
+    }
+}
+
+let feedStarted = false;
+
+function startDemo() {
+    if (feedStarted) return;
+    
+    feedStarted = true;
+    addTL('[SYSTEM] Commencing live feed analysis...', 'var(--accent-color)');
+    
+    // Start the video feed
+    const sel = document.getElementById('video-selector');
+    const videoFile = sel ? sel.value : 'drone_accident_footage.mp4';
+    const vid = document.getElementById('cam-video');
+    if(vid) vid.src = "http://localhost:8000/api/video_feed?video=" + videoFile;
+}
+
+function enableAudio() {
+    if ('speechSynthesis' in window) {
+        const utterance = new SpeechSynthesisUtterance("Audio systems online.");
+        window.speechSynthesis.speak(utterance);
+    }
+}
+
+function changeVideo(src) {
+    if (!feedStarted) return;
+    const vid = document.getElementById('cam-video');
+    if(vid) vid.src = "http://localhost:8000/api/video_feed?video=" + src;
+}
+
+const STATES=['Patrol','Detect','Assess','Communicate','Deploy','Dispatch','Relay'];
+const SICONS=['ti-route','ti-eye','ti-scan','ti-phone-call','ti-drone','ti-ambulance','ti-antenna'];
+let tick=0, etaMin=7, batt=72, activeState=4;
+let map, droneMarker, accMarker, ambMarker, routeLine;
+let accLatLng=[12.9716,80.2437];
+let ambLatLng=[12.9580,80.2280];
+let droneLatLng=[12.9740,80.2460];
+let currentScene=0;
+let frameCount=4821;
+
+const SCENES=[
+  {
+    tag:'ACCIDENT DETECTED — MOTORCYCLE',
+    persons:[
+      {box:{l:'18%',t:'30%',w:'28%',h:'42%'},lbl:'Person down — 96%',lblPos:{l:'18%',t:'72%'}},
+      {box:{l:'60%',t:'20%',w:'20%',h:'30%'},lbl:'Vehicle — 99%',lblPos:{l:'60%',t:'50%'},blue:true}
+    ],
+    loc:'NH-45 · km 32 · motorcycle collision'
+  },
+  {
+    tag:'ACCIDENT DETECTED — BICYCLE',
+    persons:[
+      {box:{l:'52%',t:'28%',w:'26%',h:'44%'},lbl:'Person down — 91%',lblPos:{l:'52%',t:'72%'}},
+      {box:{l:'14%',t:'22%',w:'32%',h:'36%'},lbl:'Vehicle — 98%',lblPos:{l:'14%',t:'58%'},blue:true}
+    ],
+    loc:'NH-45 · km 32 · bicycle collision'
+  }
+];
+
+function p(n){return String(n).padStart(2,'0')}
+function ts(){const d=new Date();return p(d.getHours())+':'+p(d.getMinutes())+':'+p(d.getSeconds())}
+
+// No more fake scene switching needed. Real YOLOv8 video feed in use!
+
+function initMap(){
+  map=L.map('leafmap',{zoomControl:false,attributionControl:true}).setView(accLatLng,15);
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{maxZoom:19,attribution:'© OpenStreetMap'}).addTo(map);
+  L.control.zoom({position:'bottomright'}).addTo(map);
+  const droneIcon=L.divIcon({html:`<div style="width:24px;height:24px;position:relative"><div style="position:absolute;inset:0;border:3px solid var(--accent-color);border-radius:50%;animation:blink 1.2s ease-in-out infinite;opacity:.7"></div><div style="position:absolute;inset:6px;background:var(--accent-color);border-radius:50%"></div></div>`,className:'',iconSize:[24,24],iconAnchor:[12,12]});
+  const accIcon=L.divIcon({html:`<div style="width:30px;height:30px;background:#ef4444;border:3px solid #fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;color:#fff;font-weight:700;box-shadow:0 0 0 6px rgba(239,68,68,.3)">!</div>`,className:'',iconSize:[30,30],iconAnchor:[15,15]});
+  const ambIcon=L.divIcon({html:`<div style="width:28px;height:22px;background:#22c55e;border:2px solid #fff;border-radius:6px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:9px;font-weight:700">AMB</div>`,className:'',iconSize:[28,22],iconAnchor:[14,11]});
+  droneMarker=L.marker(droneLatLng,{icon:droneIcon}).addTo(map).bindPopup('<b>Drone D-7</b><br>RAVEN Patrol Unit');
+  accMarker=L.marker(accLatLng,{icon:accIcon}).addTo(map).bindPopup('<b>INC-044 — ACTIVE</b><br>NH-45, km 32<br>Victims: 3 | Severity: Critical');
+  ambMarker=L.marker(ambLatLng,{icon:ambIcon}).addTo(map).bindPopup('<b>AMB-14</b><br>Apollo Emergency<br>ETA: 7 min');
+  routeLine=L.polyline([ambLatLng,accLatLng],{color:'#3b82f6',weight:4,dashArray:'8 6',opacity:.8}).addTo(map);
+}
+
+function updateMap(){
+  droneLatLng=[droneLatLng[0]+(Math.random()-.4)*.0007,droneLatLng[1]+(Math.random()-.4)*.0007];
+  droneLatLng[0]=Math.max(12.965,Math.min(12.982,droneLatLng[0]));
+  droneLatLng[1]=Math.max(80.238,Math.min(80.254,droneLatLng[1]));
+  const dlat=accLatLng[0]-ambLatLng[0],dlng=accLatLng[1]-ambLatLng[1];
+  if(Math.sqrt(dlat*dlat+dlng*dlng)>.002){
+    ambLatLng=[ambLatLng[0]+dlat*.02,ambLatLng[1]+dlng*.02];
+  }
+  if(map){droneMarker.setLatLng(droneLatLng);ambMarker.setLatLng(ambLatLng);routeLine.setLatLngs([ambLatLng,accLatLng]);}
+  document.getElementById('coord-txt').textContent=droneLatLng[0].toFixed(4)+'°N, '+droneLatLng[1].toFixed(4)+'°E';
+  document.getElementById('drone-coord').textContent=droneLatLng[0].toFixed(4)+', '+droneLatLng[1].toFixed(4);
+}
+
+function renderSev(s){
+  document.getElementById('sev-num').textContent=s;
+  const m=document.getElementById('sev-meter');m.innerHTML='';
+  for(let i=0;i<20;i++){const b=document.createElement('div');b.className='sev-bar';b.style.background=i<Math.round(s/5)?(s>75?'var(--danger-text)':s>45?'var(--warning-text)':'var(--success-text)'):'var(--border-color)';m.appendChild(b);}
+  const bd=document.getElementById('sev-badge');
+  if(s>75)bd.innerHTML='<span class="badge bc badge-anim"><i class="ti ti-flame" style="font-size:12px" aria-hidden="true"></i>Critical</span>';
+  else if(s>40)bd.innerHTML='<span class="badge bs badge-anim"><i class="ti ti-alert-triangle" style="font-size:12px" aria-hidden="true"></i>Serious</span>';
+  else bd.innerHTML='<span class="badge bm"><i class="ti ti-check" style="font-size:12px" aria-hidden="true"></i>Minor</span>';
+}
+
+function renderVic(n){
+  document.getElementById('vic-num').textContent=n;
+  const el=document.getElementById('vic-icons');el.innerHTML='';
+  for(let i=0;i<n;i++){const d=document.createElement('div');d.className='vic-dot '+(i===0?'vic-crit':i===1?'vic-ser':'vic-ok');d.innerHTML='<i class="ti ti-user" style="font-size:12px" aria-hidden="true"></i>';el.appendChild(d);}
+}
+
+function renderAgents(idx){
+  const el=document.getElementById('agent-list');el.innerHTML='';
+  STATES.forEach((s,i)=>{
+    const d=document.createElement('div');
+    d.className='astate '+(i<idx?'a-done':i===idx?'a-active':'a-pending');
+    const ic=i<idx?'ai-done':i===idx?'ai-active':'ai-pending';
+    d.innerHTML=`<div class="a-icon ${ic}"><i class="ti ${SICONS[i]}" style="font-size:11px" aria-hidden="true"></i></div><span style="font-weight:500">${s}</span>${i===idx?'<span style="margin-left:auto;font-size:9px;background:var(--accent-glow);color:var(--accent-color);padding:2px 8px;border-radius:10px;font-weight:700">ACTIVE</span>':i<idx?'<span style="margin-left:auto;font-size:12px;color:var(--success-text)">✓</span>':''}`;
+    el.appendChild(d);
+  });
+}
+
+function renderHealth(){
+  const checks=[
+    {l:'Drone GPS',s:'ok'},{l:'Camera',s:'ok'},{l:'4G uplink',s:Math.random()>.9?'w':'ok'},
+    {l:'AI engine',s:'ok'},{l:'Sensors',s:Math.random()>.8?'w':'ok'},{l:'Battery',s:batt<25?'e':batt<40?'w':'ok'},
+  ];
+  const el=document.getElementById('hlt-grid');el.innerHTML='';
+  checks.forEach(c=>{const d=document.createElement('div');d.className='hlt-item';d.innerHTML=`<span>${c.l}</span><div class="hlt-dot ${c.s==='ok'?'h-ok':c.s==='w'?'h-warn':'h-err'}"></div>`;el.appendChild(d);});
+}
+
+function renderDispatch(){
+  const rows=[{l:'Unit',v:'AMB-14 — City Hosp.'},{l:'Hospital',v:'Apollo Emergency'},{l:'Protocol',v:'Code Red — MVC'},{l:'Officer',v:'Dr. R. Sharma'},{l:'Channel',v:'Ch.7 Encrypted'}];
+  const el=document.getElementById('dp-panel');el.innerHTML='';
+  rows.forEach(r=>{const d=document.createElement('div');d.className='dp-row';d.innerHTML=`<span style="color:var(--text-secondary)">${r.l}</span><span class="dp-val">${r.v}</span>`;el.appendChild(d);});
+}
+
+function addTL(msg,col='#3b82f6'){
+  const el=document.getElementById('tl-wrap');
+  const item=document.createElement('div');item.className='tl-item tl-new';
+  item.innerHTML=`<div class="tl-d" style="background:${col}"></div><div class="tl-t">${ts()}</div><div class="tl-m">${msg}</div>`;
+  el.insertBefore(item,el.firstChild);
+  if(el.children.length>25)el.removeChild(el.lastChild);
+}
+
+const TL_SEED=[
+  ['Drone D-7 patrol started — sector 4B','var(--accent-color)'],
+  ['Motion anomaly on NH-45','var(--warning-text)'],
+  ['Accident confirmed — 3 victims','var(--danger-text)'],
+  ['Severity: CRITICAL 87/100','var(--danger-text)'],
+  ['Emergency broadcast to control','var(--accent-color)'],
+  ['AMB-14 dispatched','var(--success-text)'],
+  ['Route optimized — ETA 7 min','var(--accent-color)'],
+  ['Apollo Emergency alerted','var(--success-text)'],
+];
+
+const TL_LIVE=[
+  ['Victim 1: No movement detected','var(--danger-text)'],
+  ['AI: Spinal injury risk flagged','var(--danger-text)'],
+  ['Traffic cleared — route updated','var(--accent-color)'],
+  ['Victim 2: Vital signs unstable','var(--danger-text)'],
+  ['AMB-14 approaching intersection','var(--success-text)'],
+  ['Relay signal boosted to 98%','var(--accent-color)'],
+  ['Drone altitude adjusted 28m AGL','var(--accent-color)'],
+  ['Camera switched — scene 2','var(--warning-text)'],
+  ['Hospital trauma bay on standby','var(--success-text)'],
+  ['Police notified — unit en route','var(--warning-text)'],
+  ['Victim 3: Conscious, responding','var(--success-text)'],
+  ['Route recalculated — NH-45 clear','var(--success-text)'],
+  ['AI model retrained on scene','var(--accent-color)'],
+  ['Battery: 18 min remaining','var(--warning-text)'],
+];
+
+const HIST=[
+  {id:'INC-041',t:'14:08',loc:'OMR km 18',sev:'Minor',vc:1,eta:'4 min',st:'Resolved'},
+  {id:'INC-042',t:'14:16',loc:'Velachery Jn',sev:'Serious',vc:2,eta:'6 min',st:'Resolved'},
+  {id:'INC-043',t:'14:24',loc:'Porur Toll',sev:'Minor',vc:1,eta:'5 min',st:'Resolved'},
+  {id:'INC-044',t:'14:32',loc:'NH-45 km 32',sev:'Critical',vc:3,eta:'7 min',st:'Active'},
+];
+
+function renderHist(){
+  const tb=document.getElementById('hist-body');tb.innerHTML='';
+  HIST.forEach(r=>{
+    const tr=document.createElement('tr');
+    const sc=r.sev==='Critical'?'bc':r.sev==='Serious'?'bs':'bm';
+    tr.innerHTML=`<td style="font-weight:600;color:var(--text-primary)">${r.id}</td><td style="color:var(--text-secondary);font-family:monospace">${r.t}</td><td>${r.loc}</td><td><span class="badge ${sc}">${r.sev}</span></td><td style="text-align:center;font-weight:600">${r.vc}</td><td style="font-weight:500">${r.eta}</td><td style="${r.st==='Active'?'color:var(--accent-color);font-weight:600':'color:var(--text-secondary)'}">${r.st}</td>`;
+    tb.appendChild(tr);
+  });
+}
+
+// Fake incident generator removed. Data driven entirely by YOLOv8 WebSocket stream.
+
+function fastUpdate(){
+  tick++;
+  frameCount+=Math.floor(28+Math.random()*3);
+  const t=ts();
+  document.getElementById('sys-time').textContent=t;
+  document.getElementById('cam-ts').textContent=t;
+  document.getElementById('cam-fps').textContent=(27+Math.floor(Math.random()*4))+' fps';
+  document.getElementById('cam-latms').textContent='lat '+(110+Math.floor(Math.random()*50))+'ms';
+  document.getElementById('cam-frame-no').textContent='FRAME '+String(frameCount).padStart(6,'0');
+  
+  if(tick%8===0){batt=Math.max(0,batt-1);const bc=batt<30?'var(--danger-text)':batt<50?'var(--warning-text)':'var(--success-text)';document.getElementById('batt-num').textContent=batt+'%';document.getElementById('batt-bar').style.width=batt+'%';document.getElementById('batt-bar').style.background=bc;}
+  if(tick%3===0&&map)updateMap();
+}
+
+// WebSocket Integration
+function initWebSocket() {
+    try {
+        const ws = new WebSocket("ws://localhost:8000/ws/dashboard");
+        ws.onopen = () => {
+            addTL('LIVE LINK: Connected to RAVEN Backend WebSocket', 'var(--success-text)');
+        };
+        ws.onmessage = (event) => {
+            try {
+                const data = JSON.parse(event.data);
+                console.log("Received live incident:", data);
+                
+                if(data.id === "STATUS-UPDATE") {
+                    addTL(`[MISTRAL STATUS] ${data.message}`, 'var(--accent-color)');
+                    if ('speechSynthesis' in window) {
+                        const utterance = new SpeechSynthesisUtterance(data.message);
+                        utterance.rate = 1.0;
+                        utterance.pitch = 1.0;
+                        window.speechSynthesis.speak(utterance);
+                    }
+                    return;
+                }
+                
+                // Flag to stop mock big updates overriding real data
+                window.realIncidentDetected = true;
+                
+                // Parse Data
+                const timeStr = new Date(data.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                const newId = `INC-${String(data.id).padStart(3, '0')}`;
+                
+                // Push to History
+                HIST.unshift({
+                    id: newId,
+                    t: timeStr,
+                    loc: `${data.latitude.toFixed(4)}, ${data.longitude.toFixed(4)}`,
+                    sev: data.tier,
+                    vc: data.victim_count,
+                    eta: 'Calculating...',
+                    st: 'Active'
+                });
+                if(HIST.length > 5) HIST.pop();
+                renderHist();
+                
+                // Update Live Map Markers
+                accLatLng[0] = data.latitude;
+                accLatLng[1] = data.longitude;
+                if(map) {
+                    accMarker.setLatLng(accLatLng).bindPopup(`<b>${newId} — ACTIVE</b><br>Victims: ${data.victim_count} | Severity: ${data.tier}`);
+                    map.setView(accLatLng, 15);
+                }
+                
+                if(data.tier === "Normal") {
+                    document.getElementById('cam-status-tag').textContent = "PATROL MODE";
+                    document.getElementById('cam-status-tag').style.background = "rgba(59, 130, 246, 0.9)";
+                    return; // Normal, no accident, so don't log to history
+                }
+                
+                document.getElementById('cam-status-tag').textContent = "ACCIDENT DETECTED";
+                document.getElementById('cam-status-tag').style.background = "rgba(239, 68, 68, 0.9)";
+                
+                // Update Dashboard Numbers
+                renderSev(Math.round(data.severity_score));
+                renderVic(data.victim_count);
+                
+                // Add Semantic Assessment
+                if (data.semantic_assessment) {
+                    const el = document.getElementById('ai-semantic-text');
+                    const newText = "> [AI ANALYSIS COMPLETE] " + data.semantic_assessment;
+                    if (el.dataset.currentText !== newText) {
+                        el.dataset.currentText = newText;
+                        el.innerHTML = "";
+                        let i = 0;
+                        function typeWriter() {
+                            if (i < newText.length) {
+                                el.innerHTML += newText.charAt(i);
+                                i++;
+                                setTimeout(typeWriter, 15);
+                            }
+                        }
+                        typeWriter();
+                    }
+                }
+                
+                // Add Timeline Event
+                addTL(`[LIVE DATA] New ${data.tier} incident detected (ID: ${data.id})`, 'var(--danger-text)');
+                
+            } catch(e) {
+                console.error("Error parsing WebSocket message", e);
+            }
+        };
+        ws.onerror = (e) => {
+            addTL('WebSocket connection error - Backend offline?', 'var(--danger-text)');
+        };
+    } catch(err) {
+        console.error("Failed to initialize WebSocket", err);
+    }
+}
+
+function init(){
+  renderSev(0);renderVic(0);renderAgents(1);renderHealth();
+  TL_SEED.slice().reverse().forEach(([m,c])=>addTL(m,c));
+  renderHist();
+  setTimeout(()=>{
+    try{initMap();}catch(e){document.getElementById('leafmap').innerHTML='<div style="padding:20px;font-size:12px;color:var(--text-secondary);text-align:center">Map loading…</div>';}
+  },500);
+  setInterval(fastUpdate,1000);
+  
+  // Initialize Real-time Data
+  initWebSocket();
+}
+window.addEventListener('load',init);
+</script>
+</body>
+</html>

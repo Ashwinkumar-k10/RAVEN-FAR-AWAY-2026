@@ -1,0 +1,13 @@
+# Large files
+*.zip
+*.onnx
+dataset/
+__pycache__/
+*.pyc
+
+# Training cache
+dataset/train/labels.cache
+dataset/valid/labels.cache
+
+# Temp files
+*.tmp
