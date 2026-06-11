@@ -1,0 +1,694 @@
+// RAVEN payload bay assembly
+// Closed payload bay with two underside L-brackets mounted to the box floor.
+@settings(defaultLengthUnit = mm, kclVersion = 2.0, experimentalFeatures = allow)
+
+enclosureWidth = 120mm
+enclosureDepth = 80mm
+enclosureHeight = 60mm
+wallThickness = 2.5mm
+floorThickness = 2.5mm
+outerCornerRadius = 8mm
+innerCornerRadius = outerCornerRadius - wallThickness
+csgOverlap = 0.5mm
+
+servoSlotWidth = 6mm
+servoSlotHeight = 20mm
+servoSlotBottomOffset = 10mm
+ventSlotWidth = 2mm
+ventSlotHeight = 15mm
+ventSlotBottomOffset = (enclosureHeight - ventSlotHeight) / 2
+frontFlatWidth = enclosureWidth - (2 * outerCornerRadius)
+ventGap = (frontFlatWidth - (3 * ventSlotWidth)) / 4
+
+outerHalfWidth = enclosureWidth / 2
+outerHalfDepth = enclosureDepth / 2
+innerWidth = enclosureWidth - (2 * wallThickness)
+innerDepth = enclosureDepth - (2 * wallThickness)
+innerHalfWidth = innerWidth / 2
+innerHalfDepth = innerDepth / 2
+
+panelWidth = 110mm
+panelHeight = 75mm
+panelThickness = 2mm
+edgeChamfer = 0.5mm
+barrelDiameter = 2mm
+barrelRadius = barrelDiameter / 2
+barrelLength = 12mm
+barrelHalfLength = barrelLength / 2
+barrelChamfer = 0.5mm
+barrelEdgeOffset = 10mm
+barrelCenterOffsetX = panelWidth / 2 - barrelEdgeOffset - barrelHalfLength
+panelHalfWidth = panelWidth / 2
+panelHalfHeight = panelHeight / 2
+panelHalfThickness = panelThickness / 2
+doorCenterZ = enclosureHeight + panelHalfThickness
+
+bracketWidth = 15mm
+verticalArmHeight = 12mm
+horizontalArmLength = 12mm
+bracketThickness = 2.5mm
+holeDiameter = 3.2mm
+holeRadius = holeDiameter / 2
+bracketEdgeChamfer = 0.5mm
+bracketCsgOverlap = 0.5mm
+notchSize = horizontalArmLength - bracketThickness
+bracketHalfWidth = bracketWidth / 2
+bracketSideOffset = 15mm
+bracketRearOffset = 10mm
+leftBracketX = -outerHalfWidth + bracketSideOffset
+rightBracketX = outerHalfWidth - bracketSideOffset
+bracketCenterY = -outerHalfDepth + bracketRearOffset + bracketHalfWidth
+
+outerProfile = sketch(on = XY) {
+  top = line(start = [var 52mm, var 40mm], end = [var -52mm, var 40mm])
+  topLeft = arc(start = [var -52mm, var 40mm], end = [var -60mm, var 32mm], center = [var -52mm, var 32mm])
+  left = line(start = [var -60mm, var 32mm], end = [var -60mm, var -32mm])
+  bottomLeft = arc(start = [var -60mm, var -32mm], end = [var -52mm, var -40mm], center = [var -52mm, var -32mm])
+  bottom = line(start = [var -52mm, var -40mm], end = [var 52mm, var -40mm])
+  bottomRight = arc(start = [var 52mm, var -40mm], end = [var 60mm, var -32mm], center = [var 52mm, var -32mm])
+  right = line(start = [var 60mm, var -32mm], end = [var 60mm, var 32mm])
+  topRight = arc(start = [var 60mm, var 32mm], end = [var 52mm, var 40mm], center = [var 52mm, var 32mm])
+  coincident([top.end, topLeft.start])
+  coincident([topLeft.end, left.start])
+  coincident([left.end, bottomLeft.start])
+  coincident([bottomLeft.end, bottom.start])
+  coincident([bottom.end, bottomRight.start])
+  coincident([bottomRight.end, right.start])
+  coincident([right.end, topRight.start])
+  coincident([topRight.end, top.start])
+  horizontal(top)
+  vertical(left)
+  horizontal(bottom)
+  vertical(right)
+  vertical([topLeft.center, topLeft.start])
+  horizontal([topLeft.center, topLeft.end])
+  horizontal([bottomLeft.center, bottomLeft.start])
+  vertical([bottomLeft.center, bottomLeft.end])
+  vertical([bottomRight.center, bottomRight.start])
+  horizontal([bottomRight.center, bottomRight.end])
+  horizontal([topRight.center, topRight.start])
+  vertical([topRight.center, topRight.end])
+  horizontal([topLeft.center, topRight.center])
+  horizontal([bottomLeft.center, bottomRight.center])
+  vertical([topLeft.center, bottomLeft.center])
+  vertical([topRight.center, bottomRight.center])
+  radius(topLeft) == outerCornerRadius
+  radius(bottomLeft) == outerCornerRadius
+  radius(bottomRight) == outerCornerRadius
+  radius(topRight) == outerCornerRadius
+  horizontalDistance([topLeft.center, topRight.center]) == enclosureWidth - (2 * outerCornerRadius)
+  verticalDistance([bottomRight.center, topRight.center]) == enclosureDepth - (2 * outerCornerRadius)
+  horizontalDistance([ORIGIN, topRight.center]) == outerHalfWidth - outerCornerRadius
+  verticalDistance([ORIGIN, topRight.center]) == outerHalfDepth - outerCornerRadius
+}
+outerRegion = region(point = [0mm, 0mm], sketch = outerProfile)
+outerBody = extrude(outerRegion, length = enclosureHeight)
+
+innerCavityPlane = {
+  origin = [0mm, 0mm, floorThickness],
+  xAxis = [1, 0, 0],
+  yAxis = [0, 1, 0]
+}
+innerCavityProfile = sketch(on = innerCavityPlane) {
+  top = line(start = [var 52mm, var 37.5mm], end = [var -52mm, var 37.5mm])
+  topLeft = arc(start = [var -52mm, var 37.5mm], end = [var -57.5mm, var 32mm], center = [var -52mm, var 32mm])
+  left = line(start = [var -57.5mm, var 32mm], end = [var -57.5mm, var -32mm])
+  bottomLeft = arc(start = [var -57.5mm, var -32mm], end = [var -52mm, var -37.5mm], center = [var -52mm, var -32mm])
+  bottom = line(start = [var -52mm, var -37.5mm], end = [var 52mm, var -37.5mm])
+  bottomRight = arc(start = [var 52mm, var -37.5mm], end = [var 57.5mm, var -32mm], center = [var 52mm, var -32mm])
+  right = line(start = [var 57.5mm, var -32mm], end = [var 57.5mm, var 32mm])
+  topRight = arc(start = [var 57.5mm, var 32mm], end = [var 52mm, var 37.5mm], center = [var 52mm, var 32mm])
+  coincident([top.end, topLeft.start])
+  coincident([topLeft.end, left.start])
+  coincident([left.end, bottomLeft.start])
+  coincident([bottomLeft.end, bottom.start])
+  coincident([bottom.end, bottomRight.start])
+  coincident([bottomRight.end, right.start])
+  coincident([right.end, topRight.start])
+  coincident([topRight.end, top.start])
+  horizontal(top)
+  vertical(left)
+  horizontal(bottom)
+  vertical(right)
+  vertical([topLeft.center, topLeft.start])
+  horizontal([topLeft.center, topLeft.end])
+  horizontal([bottomLeft.center, bottomLeft.start])
+  vertical([bottomLeft.center, bottomLeft.end])
+  vertical([bottomRight.center, bottomRight.start])
+  horizontal([bottomRight.center, bottomRight.end])
+  horizontal([topRight.center, topRight.start])
+  vertical([topRight.center, topRight.end])
+  horizontal([topLeft.center, topRight.center])
+  horizontal([bottomLeft.center, bottomRight.center])
+  vertical([topLeft.center, bottomLeft.center])
+  vertical([topRight.center, bottomRight.center])
+  radius(topLeft) == innerCornerRadius
+  radius(bottomLeft) == innerCornerRadius
+  radius(bottomRight) == innerCornerRadius
+  radius(topRight) == innerCornerRadius
+  horizontalDistance([topLeft.center, topRight.center]) == innerWidth - (2 * innerCornerRadius)
+  verticalDistance([bottomRight.center, topRight.center]) == innerDepth - (2 * innerCornerRadius)
+  horizontalDistance([ORIGIN, topRight.center]) == innerHalfWidth - innerCornerRadius
+  verticalDistance([ORIGIN, topRight.center]) == innerHalfDepth - innerCornerRadius
+}
+innerCavityRegion = region(point = [0mm, 0mm], sketch = innerCavityProfile)
+innerCavityCutter = extrude(innerCavityRegion, length = enclosureHeight - floorThickness + csgOverlap)
+payloadBayBody = subtract(outerBody, tools = [innerCavityCutter])
+
+rearSlotPlane = {
+  origin = [0mm, -outerHalfDepth - csgOverlap, 0mm],
+  xAxis = [1, 0, 0],
+  yAxis = [0, 0, 1]
+}
+rearSlotSketch = sketch(on = rearSlotPlane) {
+  slotBottom = line(start = [var -3mm, var 10mm], end = [var 3mm, var 10mm])
+  slotRight = line(start = [var 3mm, var 10mm], end = [var 3mm, var 30mm])
+  slotTop = line(start = [var 3mm, var 30mm], end = [var -3mm, var 30mm])
+  slotLeft = line(start = [var -3mm, var 30mm], end = [var -3mm, var 10mm])
+  inside = point(at = [var 0mm, var 20mm])
+  coincident([slotBottom.end, slotRight.start])
+  coincident([slotRight.end, slotTop.start])
+  coincident([slotTop.end, slotLeft.start])
+  coincident([slotLeft.end, slotBottom.start])
+  horizontal(slotBottom)
+  vertical(slotRight)
+  horizontal(slotTop)
+  vertical(slotLeft)
+  coincident([
+    slotBottom.start,
+    [
+      -servoSlotWidth / 2,
+      servoSlotBottomOffset
+    ]
+  ])
+  horizontalDistance([slotBottom.start, slotBottom.end]) == servoSlotWidth
+  verticalDistance([slotBottom.start, slotLeft.start]) == servoSlotHeight
+  horizontalDistance([slotBottom.start, inside]) == servoSlotWidth / 2
+  verticalDistance([slotBottom.start, inside]) == servoSlotHeight / 2
+}
+rearSlotRegion = region(point = rearSlotSketch.inside)
+rearServoCutter = extrude(rearSlotRegion, length = -(wallThickness + 2 * csgOverlap))
+
+frontVentPlane = {
+  origin = [0mm, outerHalfDepth + csgOverlap, 0mm],
+  xAxis = [1, 0, 0],
+  yAxis = [0, 0, 1]
+}
+frontVentSketch = sketch(on = frontVentPlane) {
+  leftBottom = line(start = [var -27.5mm, var 22.5mm], end = [var -25.5mm, var 22.5mm])
+  leftRight = line(start = [var -25.5mm, var 22.5mm], end = [var -25.5mm, var 37.5mm])
+  leftTop = line(start = [var -25.5mm, var 37.5mm], end = [var -27.5mm, var 37.5mm])
+  leftLeft = line(start = [var -27.5mm, var 37.5mm], end = [var -27.5mm, var 22.5mm])
+  leftInside = point(at = [var -26.5mm, var 30mm])
+  coincident([leftBottom.end, leftRight.start])
+  coincident([leftRight.end, leftTop.start])
+  coincident([leftTop.end, leftLeft.start])
+  coincident([leftLeft.end, leftBottom.start])
+  horizontal(leftBottom)
+  vertical(leftRight)
+  horizontal(leftTop)
+  vertical(leftLeft)
+  coincident([
+    leftBottom.start,
+    [
+      -frontFlatWidth / 2 + ventGap,
+      ventSlotBottomOffset
+    ]
+  ])
+  horizontalDistance([leftBottom.start, leftBottom.end]) == ventSlotWidth
+  verticalDistance([leftBottom.start, leftLeft.start]) == ventSlotHeight
+  horizontalDistance([leftBottom.start, leftInside]) == ventSlotWidth / 2
+  verticalDistance([leftBottom.start, leftInside]) == ventSlotHeight / 2
+  centerBottom = line(start = [var -1mm, var 22.5mm], end = [var 1mm, var 22.5mm])
+  centerRight = line(start = [var 1mm, var 22.5mm], end = [var 1mm, var 37.5mm])
+  centerTop = line(start = [var 1mm, var 37.5mm], end = [var -1mm, var 37.5mm])
+  centerLeft = line(start = [var -1mm, var 37.5mm], end = [var -1mm, var 22.5mm])
+  centerInside = point(at = [var 0mm, var 30mm])
+  coincident([centerBottom.end, centerRight.start])
+  coincident([centerRight.end, centerTop.start])
+  coincident([centerTop.end, centerLeft.start])
+  coincident([centerLeft.end, centerBottom.start])
+  horizontal(centerBottom)
+  vertical(centerRight)
+  horizontal(centerTop)
+  vertical(centerLeft)
+  coincident([
+    centerBottom.start,
+    [
+      -ventSlotWidth / 2,
+      ventSlotBottomOffset
+    ]
+  ])
+  horizontalDistance([centerBottom.start, centerBottom.end]) == ventSlotWidth
+  verticalDistance([centerBottom.start, centerLeft.start]) == ventSlotHeight
+  horizontalDistance([centerBottom.start, centerInside]) == ventSlotWidth / 2
+  verticalDistance([centerBottom.start, centerInside]) == ventSlotHeight / 2
+  rightBottom = line(start = [var 25.5mm, var 22.5mm], end = [var 27.5mm, var 22.5mm])
+  rightRight = line(start = [var 27.5mm, var 22.5mm], end = [var 27.5mm, var 37.5mm])
+  rightTop = line(start = [var 27.5mm, var 37.5mm], end = [var 25.5mm, var 37.5mm])
+  rightLeft = line(start = [var 25.5mm, var 37.5mm], end = [var 25.5mm, var 22.5mm])
+  rightInside = point(at = [var 26.5mm, var 30mm])
+  coincident([rightBottom.end, rightRight.start])
+  coincident([rightRight.end, rightTop.start])
+  coincident([rightTop.end, rightLeft.start])
+  coincident([rightLeft.end, rightBottom.start])
+  horizontal(rightBottom)
+  vertical(rightRight)
+  horizontal(rightTop)
+  vertical(rightLeft)
+  coincident([
+    rightBottom.start,
+    [
+      frontFlatWidth / 2 - ventGap - ventSlotWidth,
+      ventSlotBottomOffset
+    ]
+  ])
+  horizontalDistance([rightBottom.start, rightBottom.end]) == ventSlotWidth
+  verticalDistance([rightBottom.start, rightLeft.start]) == ventSlotHeight
+  horizontalDistance([rightBottom.start, rightInside]) == ventSlotWidth / 2
+  verticalDistance([rightBottom.start, rightInside]) == ventSlotHeight / 2
+}
+leftVentRegion = region(point = frontVentSketch.leftInside)
+centerVentRegion = region(point = frontVentSketch.centerInside)
+rightVentRegion = region(point = frontVentSketch.rightInside)
+ventCutLength = wallThickness + 2 * csgOverlap
+leftVentCutter = extrude(leftVentRegion, length = ventCutLength)
+centerVentCutter = extrude(centerVentRegion, length = ventCutLength)
+rightVentCutter = extrude(rightVentRegion, length = ventCutLength)
+payloadBox = subtract(
+  payloadBayBody,
+  tools = [
+    rearServoCutter,
+    leftVentCutter,
+    centerVentCutter,
+    rightVentCutter
+  ],
+)
+  |> appearance(color = "#59636f", roughness = 84, metalness = 0)
+
+plateProfile = sketch(on = XY) {
+  plateBottom = line(start = [var -55mm, var -37.5mm], end = [var 55mm, var -37.5mm])
+  plateRight = line(start = [var 55mm, var -37.5mm], end = [var 55mm, var 37.5mm])
+  plateTop = line(start = [var 55mm, var 37.5mm], end = [var -55mm, var 37.5mm])
+  plateLeft = line(start = [var -55mm, var 37.5mm], end = [var -55mm, var -37.5mm])
+  coincident([plateBottom.end, plateRight.start])
+  coincident([plateRight.end, plateTop.start])
+  coincident([plateTop.end, plateLeft.start])
+  coincident([plateLeft.end, plateBottom.start])
+  horizontal(plateBottom)
+  vertical(plateRight)
+  horizontal(plateTop)
+  vertical(plateLeft)
+  horizontalDistance([ORIGIN, plateBottom.start]) == -panelHalfWidth
+  verticalDistance([ORIGIN, plateBottom.start]) == -panelHalfHeight
+  horizontalDistance([plateBottom.start, plateBottom.end]) == panelWidth
+  verticalDistance([plateRight.start, plateRight.end]) == panelHeight
+}
+plateRegion = region(point = [0mm, 0mm], sketch = plateProfile)
+basePanel = extrude(plateRegion, length = panelThickness, symmetric = true)
+chamferedPanel = chamfer(
+  basePanel,
+  length = edgeChamfer,
+  tags = [
+    edgeId(basePanel, closestTo = [0, panelHalfHeight, panelHalfThickness]),
+    edgeId(basePanel, closestTo = [panelHalfWidth, 0, panelHalfThickness]),
+    edgeId(
+      basePanel,
+      closestTo = [
+        0,
+        -panelHalfHeight,
+        panelHalfThickness
+      ],
+    ),
+    edgeId(basePanel, closestTo = [-panelHalfWidth, 0, panelHalfThickness]),
+    edgeId(
+      basePanel,
+      closestTo = [
+        0,
+        panelHalfHeight,
+        -panelHalfThickness
+      ],
+    ),
+    edgeId(basePanel, closestTo = [panelHalfWidth, 0, -panelHalfThickness]),
+    edgeId(
+      basePanel,
+      closestTo = [
+        0,
+        -panelHalfHeight,
+        -panelHalfThickness
+      ],
+    ),
+    edgeId(
+      basePanel,
+      closestTo = [
+        -panelHalfWidth,
+        0,
+        -panelHalfThickness
+      ],
+    ),
+    edgeId(basePanel, closestTo = [panelHalfWidth, panelHalfHeight, 0]),
+    edgeId(basePanel, closestTo = [panelHalfWidth, -panelHalfHeight, 0]),
+    edgeId(basePanel, closestTo = [-panelHalfWidth, -panelHalfHeight, 0]),
+    edgeId(basePanel, closestTo = [-panelHalfWidth, panelHalfHeight, 0])
+  ],
+)
+barrelProfile = sketch(on = XZ) {
+  leftFace = line(start = [var -6mm, var 0mm], end = [var -6mm, var 0.5mm])
+  leftBevel = line(start = [var -6mm, var 0.5mm], end = [var -5.5mm, var 1mm])
+  outerWall = line(start = [var -5.5mm, var 1mm], end = [var 5.5mm, var 1mm])
+  rightBevel = line(start = [var 5.5mm, var 1mm], end = [var 6mm, var 0.5mm])
+  rightFace = line(start = [var 6mm, var 0.5mm], end = [var 6mm, var 0mm])
+  axisEdge = line(start = [var 6mm, var 0mm], end = [var -6mm, var 0mm])
+  coincident([leftFace.end, leftBevel.start])
+  coincident([leftBevel.end, outerWall.start])
+  coincident([outerWall.end, rightBevel.start])
+  coincident([rightBevel.end, rightFace.start])
+  coincident([rightFace.end, axisEdge.start])
+  coincident([axisEdge.end, leftFace.start])
+  vertical(leftFace)
+  horizontal(outerWall)
+  vertical(rightFace)
+  horizontal(axisEdge)
+  horizontalDistance([ORIGIN, leftFace.start]) == -barrelHalfLength
+  verticalDistance([ORIGIN, leftFace.start]) == 0mm
+  horizontalDistance([ORIGIN, rightFace.start]) == barrelHalfLength
+  verticalDistance([ORIGIN, rightFace.start]) == barrelChamfer
+  horizontalDistance([ORIGIN, outerWall.start]) == -barrelHalfLength + barrelChamfer
+  verticalDistance([ORIGIN, outerWall.start]) == barrelRadius
+  horizontalDistance([leftBevel.start, leftBevel.end]) == barrelChamfer
+  verticalDistance([leftBevel.start, leftBevel.end]) == barrelChamfer
+  horizontalDistance([leftBevel.end, rightBevel.start]) == barrelLength - (2 * barrelChamfer)
+  equalLength([leftBevel, rightBevel])
+}
+barrelRegion = region(point = [0mm, 0.5mm], sketch = barrelProfile)
+leftBarrel = revolve(barrelRegion, axis = X)
+  |> translate(
+       x = -barrelCenterOffsetX,
+       y = panelHalfHeight,
+       z = 0mm,
+       global = true,
+     )
+rightBarrel = clone(leftBarrel)
+  |> translate(x = 2 * barrelCenterOffsetX, global = true)
+payloadDoor = union([
+  chamferedPanel,
+  leftBarrel,
+  rightBarrel
+])
+  |> translate(z = doorCenterZ, global = true)
+  |> appearance(color = "#47566b", roughness = 82, metalness = 0)
+
+outerBoxProfile = sketch(on = XZ) {
+  bottomEdge = line(start = [var 0mm, var 0mm], end = [var 10mm, var 0mm])
+  rightEdge = line(start = [var 10mm, var 0mm], end = [var 10mm, var 10mm])
+  topEdge = line(start = [var 10mm, var 10mm], end = [var 0mm, var 10mm])
+  leftEdge = line(start = [var 0mm, var 10mm], end = [var 0mm, var 0mm])
+  coincident([bottomEdge.start, ORIGIN])
+  coincident([bottomEdge.end, rightEdge.start])
+  coincident([rightEdge.end, topEdge.start])
+  coincident([topEdge.end, leftEdge.start])
+  coincident([leftEdge.end, bottomEdge.start])
+  horizontal(bottomEdge)
+  vertical(rightEdge)
+  horizontal(topEdge)
+  vertical(leftEdge)
+  horizontalDistance([bottomEdge.start, bottomEdge.end]) == horizontalArmLength
+  verticalDistance([rightEdge.start, rightEdge.end]) == verticalArmHeight
+}
+leftOuterBoxRegion = region(point = [1mm, 1mm], sketch = outerBoxProfile)
+rightOuterBoxRegion = region(point = [1mm, 1mm], sketch = outerBoxProfile)
+notchProfile = sketch(on = XZ) {
+  bottomEdge = line(start = [var 2.5mm, var 2.5mm], end = [var 10mm, var 2.5mm])
+  rightEdge = line(start = [var 10mm, var 2.5mm], end = [var 10mm, var 10mm])
+  topEdge = line(start = [var 10mm, var 10mm], end = [var 2.5mm, var 10mm])
+  leftEdge = line(start = [var 2.5mm, var 10mm], end = [var 2.5mm, var 2.5mm])
+  coincident([bottomEdge.end, rightEdge.start])
+  coincident([rightEdge.end, topEdge.start])
+  coincident([topEdge.end, leftEdge.start])
+  coincident([leftEdge.end, bottomEdge.start])
+  horizontal(bottomEdge)
+  vertical(rightEdge)
+  horizontal(topEdge)
+  vertical(leftEdge)
+  horizontalDistance([ORIGIN, bottomEdge.start]) == bracketThickness
+  verticalDistance([ORIGIN, bottomEdge.start]) == bracketThickness
+  horizontalDistance([bottomEdge.start, bottomEdge.end]) == notchSize
+  verticalDistance([rightEdge.start, rightEdge.end]) == notchSize
+}
+leftNotchRegion = region(point = [6mm, 6mm], sketch = notchProfile)
+rightNotchRegion = region(point = [6mm, 6mm], sketch = notchProfile)
+verticalHolePlane = {
+  origin = [-bracketCsgOverlap, 0mm, 0mm],
+  xAxis = [0, 1, 0],
+  yAxis = [0, 0, 1]
+}
+verticalHoleSketch = sketch(on = verticalHolePlane) {
+  hole = circle(start = [var 2mm, var 6mm], center = [var 0mm, var 6mm])
+  horizontal([hole.center, hole.start])
+  horizontalDistance([ORIGIN, hole.center]) == 0mm
+  verticalDistance([ORIGIN, hole.center]) == verticalArmHeight / 2
+  radius(hole) == holeRadius
+}
+leftVerticalHoleRegion = region(point = [0mm, 6mm], sketch = verticalHoleSketch)
+rightVerticalHoleRegion = region(point = [0mm, 6mm], sketch = verticalHoleSketch)
+horizontalHolePlane = {
+  origin = [0mm, 0mm, -bracketCsgOverlap],
+  xAxis = [1, 0, 0],
+  yAxis = [0, 1, 0]
+}
+horizontalHoleSketch = sketch(on = horizontalHolePlane) {
+  hole = circle(start = [var 8mm, var 0mm], center = [var 6mm, var 0mm])
+  horizontal([hole.center, hole.start])
+  horizontalDistance([ORIGIN, hole.center]) == horizontalArmLength / 2
+  verticalDistance([ORIGIN, hole.center]) == 0mm
+  radius(hole) == holeRadius
+}
+leftHorizontalHoleRegion = region(point = [6mm, 0mm], sketch = horizontalHoleSketch)
+rightHorizontalHoleRegion = region(point = [6mm, 0mm], sketch = horizontalHoleSketch)
+
+leftOuterBracketBox = extrude(leftOuterBoxRegion, length = bracketWidth, symmetric = true)
+leftChamferedBracketBox = chamfer(
+  leftOuterBracketBox,
+  length = bracketEdgeChamfer,
+  tags = [
+    edgeId(
+      leftOuterBracketBox,
+      closestTo = [
+        horizontalArmLength / 2,
+        bracketHalfWidth,
+        0
+      ],
+    ),
+    edgeId(
+      leftOuterBracketBox,
+      closestTo = [
+        horizontalArmLength / 2,
+        -bracketHalfWidth,
+        0
+      ],
+    ),
+    edgeId(
+      leftOuterBracketBox,
+      closestTo = [
+        horizontalArmLength / 2,
+        bracketHalfWidth,
+        verticalArmHeight
+      ],
+    ),
+    edgeId(
+      leftOuterBracketBox,
+      closestTo = [
+        horizontalArmLength / 2,
+        -bracketHalfWidth,
+        verticalArmHeight
+      ],
+    ),
+    edgeId(leftOuterBracketBox, closestTo = [0, 0, 0]),
+    edgeId(leftOuterBracketBox, closestTo = [horizontalArmLength, 0, 0]),
+    edgeId(leftOuterBracketBox, closestTo = [0, 0, verticalArmHeight]),
+    edgeId(
+      leftOuterBracketBox,
+      closestTo = [
+        horizontalArmLength,
+        0,
+        verticalArmHeight
+      ],
+    ),
+    edgeId(
+      leftOuterBracketBox,
+      closestTo = [
+        0,
+        bracketHalfWidth,
+        verticalArmHeight / 2
+      ],
+    ),
+    edgeId(
+      leftOuterBracketBox,
+      closestTo = [
+        0,
+        -bracketHalfWidth,
+        verticalArmHeight / 2
+      ],
+    ),
+    edgeId(
+      leftOuterBracketBox,
+      closestTo = [
+        horizontalArmLength,
+        bracketHalfWidth,
+        verticalArmHeight / 2
+      ],
+    ),
+    edgeId(
+      leftOuterBracketBox,
+      closestTo = [
+        horizontalArmLength,
+        -bracketHalfWidth,
+        verticalArmHeight / 2
+      ],
+    )
+  ],
+)
+leftNotchCutter = extrude(leftNotchRegion, length = bracketWidth + 2 * bracketCsgOverlap, symmetric = true)
+leftBracketWithoutHoles = subtract(leftChamferedBracketBox, tools = [leftNotchCutter])
+leftVerticalHoleCutter = extrude(leftVerticalHoleRegion, length = bracketThickness + 2 * bracketCsgOverlap)
+leftHorizontalHoleCutter = extrude(leftHorizontalHoleRegion, length = bracketThickness + 2 * bracketCsgOverlap)
+leftBracketLocal = subtract(
+  leftBracketWithoutHoles,
+  tools = [
+    leftVerticalHoleCutter,
+    leftHorizontalHoleCutter
+  ],
+)
+leftMountingBracket = leftBracketLocal
+  |> rotate(axis = X, angle = 180deg, global = true)
+  |> translate(
+       x = leftBracketX,
+       y = bracketCenterY,
+       z = 0mm,
+       global = true,
+     )
+  |> appearance(color = "#2f363d", roughness = 78, metalness = 0)
+
+rightOuterBracketBox = extrude(rightOuterBoxRegion, length = bracketWidth, symmetric = true)
+rightChamferedBracketBox = chamfer(
+  rightOuterBracketBox,
+  length = bracketEdgeChamfer,
+  tags = [
+    edgeId(
+      rightOuterBracketBox,
+      closestTo = [
+        horizontalArmLength / 2,
+        bracketHalfWidth,
+        0
+      ],
+    ),
+    edgeId(
+      rightOuterBracketBox,
+      closestTo = [
+        horizontalArmLength / 2,
+        -bracketHalfWidth,
+        0
+      ],
+    ),
+    edgeId(
+      rightOuterBracketBox,
+      closestTo = [
+        horizontalArmLength / 2,
+        bracketHalfWidth,
+        verticalArmHeight
+      ],
+    ),
+    edgeId(
+      rightOuterBracketBox,
+      closestTo = [
+        horizontalArmLength / 2,
+        -bracketHalfWidth,
+        verticalArmHeight
+      ],
+    ),
+    edgeId(rightOuterBracketBox, closestTo = [0, 0, 0]),
+    edgeId(rightOuterBracketBox, closestTo = [horizontalArmLength, 0, 0]),
+    edgeId(rightOuterBracketBox, closestTo = [0, 0, verticalArmHeight]),
+    edgeId(
+      rightOuterBracketBox,
+      closestTo = [
+        horizontalArmLength,
+        0,
+        verticalArmHeight
+      ],
+    ),
+    edgeId(
+      rightOuterBracketBox,
+      closestTo = [
+        0,
+        bracketHalfWidth,
+        verticalArmHeight / 2
+      ],
+    ),
+    edgeId(
+      rightOuterBracketBox,
+      closestTo = [
+        0,
+        -bracketHalfWidth,
+        verticalArmHeight / 2
+      ],
+    ),
+    edgeId(
+      rightOuterBracketBox,
+      closestTo = [
+        horizontalArmLength,
+        bracketHalfWidth,
+        verticalArmHeight / 2
+      ],
+    ),
+    edgeId(
+      rightOuterBracketBox,
+      closestTo = [
+        horizontalArmLength,
+        -bracketHalfWidth,
+        verticalArmHeight / 2
+      ],
+    )
+  ],
+)
+rightNotchCutter = extrude(rightNotchRegion, length = bracketWidth + 2 * bracketCsgOverlap, symmetric = true)
+rightBracketWithoutHoles = subtract(rightChamferedBracketBox, tools = [rightNotchCutter])
+rightVerticalHoleCutter = extrude(rightVerticalHoleRegion, length = bracketThickness + 2 * bracketCsgOverlap)
+rightHorizontalHoleCutter = extrude(rightHorizontalHoleRegion, length = bracketThickness + 2 * bracketCsgOverlap)
+rightBracketLocal = subtract(
+  rightBracketWithoutHoles,
+  tools = [
+    rightVerticalHoleCutter,
+    rightHorizontalHoleCutter
+  ],
+)
+rightMountingBracket = rightBracketLocal
+  |> rotate(axis = X, angle = 180deg, global = true)
+  |> rotate(axis = Z, angle = 180deg, global = true)
+  |> translate(
+       x = rightBracketX,
+       y = bracketCenterY,
+       z = 0mm,
+       global = true,
+     )
+  |> appearance(color = "#2f363d", roughness = 78, metalness = 0)
+
+hide(outerProfile)
+hide(innerCavityProfile)
+hide(rearSlotSketch)
+hide(frontVentSketch)
+hide(plateProfile)
+hide(barrelProfile)
+hide(outerBoxProfile)
+hide(notchProfile)
+hide(verticalHoleSketch)
+hide(horizontalHoleSketch)
+
+export ravenAssembly = flatten([
+  payloadBox,
+  payloadDoor,
+  leftMountingBracket,
+  rightMountingBracket
+])
+
+ravenAssembly

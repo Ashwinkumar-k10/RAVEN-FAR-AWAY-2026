@@ -1,0 +1,259 @@
+// Quadcopter drone arm
+// Single printable hollow tube arm with motor plate and body mounting flange.
+@settings(defaultLengthUnit = mm, experimentalFeatures = allow)
+
+armLength = 220mm
+outerDiameter = 20mm
+innerDiameter = 14mm
+bodyFlangeThickness = 8mm
+motorPlateThickness = 6mm
+motorPlateOuterDiameter = 44mm
+collarDiameter = 26mm
+bodyCollarLength = 16mm
+motorCollarLength = 16mm
+motorCollarStartX = armLength - motorCollarLength
+
+bodyFlangeHalfWidth = 25mm
+bodyFlangeHalfHeight = 17mm
+bodyFlangeCornerChamfer = 5mm
+bodyBoltSpacingY = 32mm
+bodyBoltSpacingZ = 20mm
+bodyBoltDiameter = 4.2mm
+bodyHoleCutStartX = -1mm
+bodyHoleCutLength = bodyFlangeThickness + 2mm
+
+motorBoltSpacing = 16mm
+motorBoltDiameter = 3.2mm
+motorHoleCutStartX = armLength - motorPlateThickness - 1mm
+motorHoleCutLength = motorPlateThickness + 2mm
+
+centralBoreStartX = -1mm
+centralBoreCutLength = armLength + 2mm
+
+outerTubeProfile = sketch(on = YZ) {
+  outerTubeCircle = circle(start = [var 10mm, var 0mm], center = [var 0mm, var 0mm])
+
+  coincident([outerTubeCircle.center, ORIGIN])
+  diameter(outerTubeCircle) == outerDiameter
+  horizontal([
+    outerTubeCircle.center,
+    outerTubeCircle.start
+  ])
+}
+
+bodyCollarProfile = sketch(on = YZ) {
+  bodyCollarCircle = circle(start = [var 13mm, var 0mm], center = [var 0mm, var 0mm])
+
+  coincident([bodyCollarCircle.center, ORIGIN])
+  diameter(bodyCollarCircle) == collarDiameter
+  horizontal([
+    bodyCollarCircle.center,
+    bodyCollarCircle.start
+  ])
+}
+
+motorCollarProfile = sketch(on = offsetPlane(YZ, offset = motorCollarStartX)) {
+  motorCollarCircle = circle(start = [var 13mm, var 0mm], center = [var 0mm, var 0mm])
+
+  coincident([motorCollarCircle.center, ORIGIN])
+  diameter(motorCollarCircle) == collarDiameter
+  horizontal([
+    motorCollarCircle.center,
+    motorCollarCircle.start
+  ])
+}
+
+centralBoreProfile = sketch(on = offsetPlane(YZ, offset = centralBoreStartX)) {
+  centralBoreCircle = circle(start = [var 7mm, var 0mm], center = [var 0mm, var 0mm])
+
+  coincident([centralBoreCircle.center, ORIGIN])
+  diameter(centralBoreCircle) == innerDiameter
+  horizontal([
+    centralBoreCircle.center,
+    centralBoreCircle.start
+  ])
+}
+
+motorPlateProfile = sketch(on = offsetPlane(YZ, offset = armLength - motorPlateThickness)) {
+  motorPlateCircle = circle(start = [var 22mm, var 0mm], center = [var 0mm, var 0mm])
+
+  coincident([motorPlateCircle.center, ORIGIN])
+  diameter(motorPlateCircle) == motorPlateOuterDiameter
+  horizontal([
+    motorPlateCircle.center,
+    motorPlateCircle.start
+  ])
+}
+
+bodyFlangeProfile = sketch(on = YZ) {
+  edge1 = line(start = [var 20mm, var 17mm], end = [var 25mm, var 12mm])
+  edge2 = line(start = [var 25mm, var 12mm], end = [var 25mm, var -12mm])
+  edge3 = line(start = [var 25mm, var -12mm], end = [var 20mm, var -17mm])
+  edge4 = line(start = [var 20mm, var -17mm], end = [var -20mm, var -17mm])
+  edge5 = line(start = [var -20mm, var -17mm], end = [var -25mm, var -12mm])
+  edge6 = line(start = [var -25mm, var -12mm], end = [var -25mm, var 12mm])
+  edge7 = line(start = [var -25mm, var 12mm], end = [var -20mm, var 17mm])
+  edge8 = line(start = [var -20mm, var 17mm], end = [var 20mm, var 17mm])
+
+  coincident([edge1.end, edge2.start])
+  coincident([edge2.end, edge3.start])
+  coincident([edge3.end, edge4.start])
+  coincident([edge4.end, edge5.start])
+  coincident([edge5.end, edge6.start])
+  coincident([edge6.end, edge7.start])
+  coincident([edge7.end, edge8.start])
+  coincident([edge8.end, edge1.start])
+
+  horizontalDistance([ORIGIN, edge1.start]) == bodyFlangeHalfWidth - bodyFlangeCornerChamfer
+  verticalDistance([ORIGIN, edge1.start]) == bodyFlangeHalfHeight
+  horizontalDistance([ORIGIN, edge2.start]) == bodyFlangeHalfWidth
+  verticalDistance([ORIGIN, edge2.start]) == bodyFlangeHalfHeight - bodyFlangeCornerChamfer
+  horizontalDistance([ORIGIN, edge3.start]) == bodyFlangeHalfWidth
+  verticalDistance([ORIGIN, edge3.start]) == -(bodyFlangeHalfHeight - bodyFlangeCornerChamfer)
+  horizontalDistance([ORIGIN, edge4.start]) == bodyFlangeHalfWidth - bodyFlangeCornerChamfer
+  verticalDistance([ORIGIN, edge4.start]) == -bodyFlangeHalfHeight
+  horizontalDistance([ORIGIN, edge5.start]) == -(bodyFlangeHalfWidth - bodyFlangeCornerChamfer)
+  verticalDistance([ORIGIN, edge5.start]) == -bodyFlangeHalfHeight
+  horizontalDistance([ORIGIN, edge6.start]) == -bodyFlangeHalfWidth
+  verticalDistance([ORIGIN, edge6.start]) == -(bodyFlangeHalfHeight - bodyFlangeCornerChamfer)
+  horizontalDistance([ORIGIN, edge7.start]) == -bodyFlangeHalfWidth
+  verticalDistance([ORIGIN, edge7.start]) == bodyFlangeHalfHeight - bodyFlangeCornerChamfer
+  horizontalDistance([ORIGIN, edge8.start]) == -(bodyFlangeHalfWidth - bodyFlangeCornerChamfer)
+  verticalDistance([ORIGIN, edge8.start]) == bodyFlangeHalfHeight
+}
+
+bodyMountHoleProfile = sketch(on = offsetPlane(YZ, offset = bodyHoleCutStartX)) {
+  upperRightHole = circle(start = [var 18.1mm, var 10mm], center = [var 16mm, var 10mm])
+  upperLeftHole = circle(start = [var -13.9mm, var 10mm], center = [var -16mm, var 10mm])
+  lowerLeftHole = circle(start = [var -13.9mm, var -10mm], center = [var -16mm, var -10mm])
+  lowerRightHole = circle(start = [var 18.1mm, var -10mm], center = [var 16mm, var -10mm])
+
+  horizontalDistance([ORIGIN, upperRightHole.center]) == bodyBoltSpacingY / 2
+  verticalDistance([ORIGIN, upperRightHole.center]) == bodyBoltSpacingZ / 2
+  horizontalDistance([ORIGIN, upperLeftHole.center]) == -bodyBoltSpacingY / 2
+  verticalDistance([ORIGIN, upperLeftHole.center]) == bodyBoltSpacingZ / 2
+  horizontalDistance([ORIGIN, lowerLeftHole.center]) == -bodyBoltSpacingY / 2
+  verticalDistance([ORIGIN, lowerLeftHole.center]) == -bodyBoltSpacingZ / 2
+  horizontalDistance([ORIGIN, lowerRightHole.center]) == bodyBoltSpacingY / 2
+  verticalDistance([ORIGIN, lowerRightHole.center]) == -bodyBoltSpacingZ / 2
+
+  diameter(upperRightHole) == bodyBoltDiameter
+  diameter(upperLeftHole) == bodyBoltDiameter
+  diameter(lowerLeftHole) == bodyBoltDiameter
+  diameter(lowerRightHole) == bodyBoltDiameter
+  horizontal([
+    upperRightHole.center,
+    upperRightHole.start
+  ])
+  horizontal([
+    upperLeftHole.center,
+    upperLeftHole.start
+  ])
+  horizontal([
+    lowerLeftHole.center,
+    lowerLeftHole.start
+  ])
+  horizontal([
+    lowerRightHole.center,
+    lowerRightHole.start
+  ])
+}
+
+motorMountHoleProfile = sketch(on = offsetPlane(YZ, offset = motorHoleCutStartX)) {
+  upperRightHole = circle(start = [var 9.6mm, var 8mm], center = [var 8mm, var 8mm])
+  upperLeftHole = circle(start = [var -6.4mm, var 8mm], center = [var -8mm, var 8mm])
+  lowerLeftHole = circle(start = [var -6.4mm, var -8mm], center = [var -8mm, var -8mm])
+  lowerRightHole = circle(start = [var 9.6mm, var -8mm], center = [var 8mm, var -8mm])
+
+  horizontalDistance([ORIGIN, upperRightHole.center]) == motorBoltSpacing / 2
+  verticalDistance([ORIGIN, upperRightHole.center]) == motorBoltSpacing / 2
+  horizontalDistance([ORIGIN, upperLeftHole.center]) == -motorBoltSpacing / 2
+  verticalDistance([ORIGIN, upperLeftHole.center]) == motorBoltSpacing / 2
+  horizontalDistance([ORIGIN, lowerLeftHole.center]) == -motorBoltSpacing / 2
+  verticalDistance([ORIGIN, lowerLeftHole.center]) == -motorBoltSpacing / 2
+  horizontalDistance([ORIGIN, lowerRightHole.center]) == motorBoltSpacing / 2
+  verticalDistance([ORIGIN, lowerRightHole.center]) == -motorBoltSpacing / 2
+
+  diameter(upperRightHole) == motorBoltDiameter
+  diameter(upperLeftHole) == motorBoltDiameter
+  diameter(lowerLeftHole) == motorBoltDiameter
+  diameter(lowerRightHole) == motorBoltDiameter
+  horizontal([
+    upperRightHole.center,
+    upperRightHole.start
+  ])
+  horizontal([
+    upperLeftHole.center,
+    upperLeftHole.start
+  ])
+  horizontal([
+    lowerLeftHole.center,
+    lowerLeftHole.start
+  ])
+  horizontal([
+    lowerRightHole.center,
+    lowerRightHole.start
+  ])
+}
+
+outerTubeRegion = region(point = [9mm, 0mm], sketch = outerTubeProfile)
+bodyCollarRegion = region(point = [12mm, 0mm], sketch = bodyCollarProfile)
+motorCollarRegion = region(point = [12mm, 0mm], sketch = motorCollarProfile)
+centralBoreRegion = region(point = [0mm, 0mm], sketch = centralBoreProfile)
+motorPlateRegion = region(point = [20mm, 0mm], sketch = motorPlateProfile)
+bodyFlangeRegion = region(point = [0mm, 0mm], sketch = bodyFlangeProfile)
+bodyHoleRegion1 = region(point = [16mm, 10mm], sketch = bodyMountHoleProfile)
+bodyHoleRegion2 = region(point = [-16mm, 10mm], sketch = bodyMountHoleProfile)
+bodyHoleRegion3 = region(point = [-16mm, -10mm], sketch = bodyMountHoleProfile)
+bodyHoleRegion4 = region(point = [16mm, -10mm], sketch = bodyMountHoleProfile)
+motorHoleRegion1 = region(point = [8mm, 8mm], sketch = motorMountHoleProfile)
+motorHoleRegion2 = region(point = [-8mm, 8mm], sketch = motorMountHoleProfile)
+motorHoleRegion3 = region(point = [-8mm, -8mm], sketch = motorMountHoleProfile)
+motorHoleRegion4 = region(point = [8mm, -8mm], sketch = motorMountHoleProfile)
+
+printableDroneArm = appearance(
+  subtract(
+    union([
+      extrude(outerTubeRegion, length = armLength),
+      extrude(bodyFlangeRegion, length = bodyFlangeThickness),
+      extrude(motorPlateRegion, length = motorPlateThickness),
+      extrude(bodyCollarRegion, length = bodyCollarLength),
+      extrude(motorCollarRegion, length = motorCollarLength)
+    ]),
+    tools = [
+      extrude(centralBoreRegion, length = centralBoreCutLength),
+      extrude(
+        [
+          bodyHoleRegion1,
+          bodyHoleRegion2,
+          bodyHoleRegion3,
+          bodyHoleRegion4
+        ],
+        length = bodyHoleCutLength,
+      ),
+      extrude(
+        [
+          motorHoleRegion1,
+          motorHoleRegion2,
+          motorHoleRegion3,
+          motorHoleRegion4
+        ],
+        length = motorHoleCutLength,
+      )
+    ],
+  ),
+  color = "#22282d",
+  metalness = 0,
+  roughness = 65,
+)
+
+hide(outerTubeProfile)
+hide(bodyCollarProfile)
+hide(motorCollarProfile)
+hide(centralBoreProfile)
+hide(motorPlateProfile)
+hide(bodyFlangeProfile)
+hide(bodyMountHoleProfile)
+hide(motorMountHoleProfile)
+
+printableDroneArm

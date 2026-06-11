@@ -1,0 +1,151 @@
+// Payload door panel
+// Flat hinged panel with two barrels and chamfered outer edges.
+@settings(defaultLengthUnit = mm)
+
+panelWidth = 110
+panelHeight = 75
+panelThickness = 2
+edgeChamfer = 0.5
+
+barrelDiameter = 2
+barrelRadius = barrelDiameter / 2
+barrelLength = 12
+barrelHalfLength = barrelLength / 2
+barrelChamfer = 0.5
+barrelEdgeOffset = 10
+barrelCenterOffsetX = panelWidth / 2 - barrelEdgeOffset - barrelHalfLength
+panelHalfWidth = panelWidth / 2
+panelHalfHeight = panelHeight / 2
+panelHalfThickness = panelThickness / 2
+
+plateProfile = sketch(on = XY) {
+  plateBottom = line(start = [var -55mm, var -37.5mm], end = [var 55mm, var -37.5mm])
+  plateRight = line(start = [var 55mm, var -37.5mm], end = [var 55mm, var 37.5mm])
+  plateTop = line(start = [var 55mm, var 37.5mm], end = [var -55mm, var 37.5mm])
+  plateLeft = line(start = [var -55mm, var 37.5mm], end = [var -55mm, var -37.5mm])
+
+  coincident([plateBottom.end, plateRight.start])
+  coincident([plateRight.end, plateTop.start])
+  coincident([plateTop.end, plateLeft.start])
+  coincident([plateLeft.end, plateBottom.start])
+
+  horizontal(plateBottom)
+  vertical(plateRight)
+  horizontal(plateTop)
+  vertical(plateLeft)
+
+  horizontalDistance([ORIGIN, plateBottom.start]) == -panelHalfWidth
+  verticalDistance([ORIGIN, plateBottom.start]) == -panelHalfHeight
+  horizontalDistance([plateBottom.start, plateBottom.end]) == panelWidth
+  verticalDistance([plateRight.start, plateRight.end]) == panelHeight
+}
+plateRegion = region(point = [0mm, 0mm], sketch = plateProfile)
+basePanel = extrude(plateRegion, length = panelThickness, symmetric = true)
+
+chamferedPanel = chamfer(
+  basePanel,
+  length = edgeChamfer,
+  tags = [
+    edgeId(basePanel, closestTo = [0, panelHalfHeight, panelHalfThickness]),
+    edgeId(basePanel, closestTo = [panelHalfWidth, 0, panelHalfThickness]),
+    edgeId(
+      basePanel,
+      closestTo = [
+        0,
+        -panelHalfHeight,
+        panelHalfThickness
+      ],
+    ),
+    edgeId(basePanel, closestTo = [-panelHalfWidth, 0, panelHalfThickness]),
+    edgeId(
+      basePanel,
+      closestTo = [
+        0,
+        panelHalfHeight,
+        -panelHalfThickness
+      ],
+    ),
+    edgeId(basePanel, closestTo = [panelHalfWidth, 0, -panelHalfThickness]),
+    edgeId(
+      basePanel,
+      closestTo = [
+        0,
+        -panelHalfHeight,
+        -panelHalfThickness
+      ],
+    ),
+    edgeId(
+      basePanel,
+      closestTo = [
+        -panelHalfWidth,
+        0,
+        -panelHalfThickness
+      ],
+    ),
+    edgeId(basePanel, closestTo = [panelHalfWidth, panelHalfHeight, 0]),
+    edgeId(basePanel, closestTo = [panelHalfWidth, -panelHalfHeight, 0]),
+    edgeId(basePanel, closestTo = [-panelHalfWidth, -panelHalfHeight, 0]),
+    edgeId(basePanel, closestTo = [-panelHalfWidth, panelHalfHeight, 0])
+  ],
+)
+
+barrelProfile = sketch(on = XZ) {
+  leftFace = line(start = [var -6mm, var 0mm], end = [var -6mm, var 0.5mm])
+  leftBevel = line(start = [var -6mm, var 0.5mm], end = [var -5.5mm, var 1mm])
+  outerWall = line(start = [var -5.5mm, var 1mm], end = [var 5.5mm, var 1mm])
+  rightBevel = line(start = [var 5.5mm, var 1mm], end = [var 6mm, var 0.5mm])
+  rightFace = line(start = [var 6mm, var 0.5mm], end = [var 6mm, var 0mm])
+  axisEdge = line(start = [var 6mm, var 0mm], end = [var -6mm, var 0mm])
+
+  coincident([leftFace.end, leftBevel.start])
+  coincident([leftBevel.end, outerWall.start])
+  coincident([outerWall.end, rightBevel.start])
+  coincident([rightBevel.end, rightFace.start])
+  coincident([rightFace.end, axisEdge.start])
+  coincident([axisEdge.end, leftFace.start])
+
+  vertical(leftFace)
+  horizontal(outerWall)
+  vertical(rightFace)
+  horizontal(axisEdge)
+
+  horizontalDistance([ORIGIN, leftFace.start]) == -barrelHalfLength
+  verticalDistance([ORIGIN, leftFace.start]) == 0
+  horizontalDistance([ORIGIN, rightFace.start]) == barrelHalfLength
+  verticalDistance([ORIGIN, rightFace.start]) == barrelChamfer
+  horizontalDistance([ORIGIN, outerWall.start]) == -barrelHalfLength + barrelChamfer
+  verticalDistance([ORIGIN, outerWall.start]) == barrelRadius
+  horizontalDistance([leftBevel.start, leftBevel.end]) == barrelChamfer
+  verticalDistance([leftBevel.start, leftBevel.end]) == barrelChamfer
+  horizontalDistance([leftBevel.end, rightBevel.start]) == barrelLength - (2 * barrelChamfer)
+  equalLength([leftBevel, rightBevel])
+}
+barrelRegion = region(point = [0mm, 0.5mm], sketch = barrelProfile)
+barrelBody = revolve(barrelRegion, axis = X)
+
+leftBarrel = clone(barrelBody)
+  |> translate(
+       x = -barrelCenterOffsetX,
+       y = panelHalfHeight,
+       z = 0,
+       global = true,
+     )
+rightBarrel = clone(barrelBody)
+  |> translate(
+       x = barrelCenterOffsetX,
+       y = panelHalfHeight,
+       z = 0,
+       global = true,
+     )
+
+payloadDoorPanel = union([
+  chamferedPanel,
+  leftBarrel,
+  rightBarrel
+])
+  |> appearance(color = "#6f7882", roughness = 82, metalness = 0)
+
+hide(plateProfile)
+hide(barrelProfile)
+
+payloadDoorPanel

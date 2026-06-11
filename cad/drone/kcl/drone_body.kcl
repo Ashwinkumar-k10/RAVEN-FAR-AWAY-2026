@@ -1,0 +1,269 @@
+// Search and rescue quadcopter central body
+// Single solid faceted drone body with arm sockets, GNSS pad, and payload mounting points.
+@settings(defaultLengthUnit = mm, kclVersion = 2.0)
+
+bodyLength = 180mm
+bodyWidth = 180mm
+overallHeight = 70mm
+baseBodyHeight = 67mm
+bodyDepthChamfer = 20mm
+middleInset = 5mm
+topInset = 15mm
+
+armSocketDiameter = 24mm
+armSocketRadius = armSocketDiameter / 2
+armSocketCenterZ = 35mm
+armSocketStartOffset = 55mm
+armSocketCutDepth = 45mm
+
+antennaPadLength = 60mm
+antennaPadWidth = 44mm
+antennaPadChamfer = 5mm
+antennaPadStartZ = 66mm
+antennaPadHeight = 4mm
+antennaHoleDiameter = 3.2mm
+antennaHoleSpacingX = 32mm
+antennaHoleSpacingY = 22mm
+antennaHoleCutStartZ = 63mm
+antennaHoleCutLength = 8mm
+
+payloadHoleDiameter = 4.2mm
+payloadHoleSpacingX = 50mm
+payloadHoleSpacingY = 36mm
+payloadHoleCutStartZ = -1mm
+payloadHoleCutDepth = 12mm
+
+bottomProfile = sketch(on = XY) {
+  edge1 = line(start = [-70mm, -90mm], end = [70mm, -90mm])
+  edge2 = line(start = [70mm, -90mm], end = [90mm, -70mm])
+  edge3 = line(start = [90mm, -70mm], end = [90mm, 70mm])
+  edge4 = line(start = [90mm, 70mm], end = [70mm, 90mm])
+  edge5 = line(start = [70mm, 90mm], end = [-70mm, 90mm])
+  edge6 = line(start = [-70mm, 90mm], end = [-90mm, 70mm])
+  edge7 = line(start = [-90mm, 70mm], end = [-90mm, -70mm])
+  edge8 = line(start = [-90mm, -70mm], end = [-70mm, -90mm])
+}
+
+middleProfile = sketch(on = offsetPlane(XY, offset = baseBodyHeight / 2)) {
+  edge1 = line(start = [-65mm, -85mm], end = [65mm, -85mm])
+  edge2 = line(start = [65mm, -85mm], end = [85mm, -65mm])
+  edge3 = line(start = [85mm, -65mm], end = [85mm, 65mm])
+  edge4 = line(start = [85mm, 65mm], end = [65mm, 85mm])
+  edge5 = line(start = [65mm, 85mm], end = [-65mm, 85mm])
+  edge6 = line(start = [-65mm, 85mm], end = [-85mm, 65mm])
+  edge7 = line(start = [-85mm, 65mm], end = [-85mm, -65mm])
+  edge8 = line(start = [-85mm, -65mm], end = [-65mm, -85mm])
+}
+
+topProfile = sketch(on = offsetPlane(XY, offset = baseBodyHeight)) {
+  edge1 = line(start = [-55mm, -75mm], end = [55mm, -75mm])
+  edge2 = line(start = [55mm, -75mm], end = [75mm, -55mm])
+  edge3 = line(start = [75mm, -55mm], end = [75mm, 55mm])
+  edge4 = line(start = [75mm, 55mm], end = [55mm, 75mm])
+  edge5 = line(start = [55mm, 75mm], end = [-55mm, 75mm])
+  edge6 = line(start = [-55mm, 75mm], end = [-75mm, 55mm])
+  edge7 = line(start = [-75mm, 55mm], end = [-75mm, -55mm])
+  edge8 = line(start = [-75mm, -55mm], end = [-55mm, -75mm])
+}
+
+antennaPadProfile = sketch(on = offsetPlane(XY, offset = antennaPadStartZ)) {
+  edge1 = line(start = [-25mm, -22mm], end = [25mm, -22mm])
+  edge2 = line(start = [25mm, -22mm], end = [30mm, -17mm])
+  edge3 = line(start = [30mm, -17mm], end = [30mm, 17mm])
+  edge4 = line(start = [30mm, 17mm], end = [25mm, 22mm])
+  edge5 = line(start = [25mm, 22mm], end = [-25mm, 22mm])
+  edge6 = line(start = [-25mm, 22mm], end = [-30mm, 17mm])
+  edge7 = line(start = [-30mm, 17mm], end = [-30mm, -17mm])
+  edge8 = line(start = [-30mm, -17mm], end = [-25mm, -22mm])
+}
+
+positiveXSocketProfile = sketch(on = offsetPlane(YZ, offset = armSocketStartOffset)) {
+  socketCircle = circle(start = [var 12mm, var 35mm], center = [var 0mm, var 35mm])
+
+  horizontal([
+    socketCircle.center,
+    socketCircle.start
+  ])
+  diameter(socketCircle) == armSocketDiameter
+  horizontalDistance([ORIGIN, socketCircle.center]) == 0mm
+  verticalDistance([ORIGIN, socketCircle.center]) == armSocketCenterZ
+}
+
+negativeXSocketProfile = sketch(on = offsetPlane(YZ, offset = -armSocketStartOffset)) {
+  socketCircle = circle(start = [var 12mm, var 35mm], center = [var 0mm, var 35mm])
+
+  horizontal([
+    socketCircle.center,
+    socketCircle.start
+  ])
+  diameter(socketCircle) == armSocketDiameter
+  horizontalDistance([ORIGIN, socketCircle.center]) == 0mm
+  verticalDistance([ORIGIN, socketCircle.center]) == armSocketCenterZ
+}
+
+positiveYSocketProfile = sketch(on = offsetPlane(XZ, offset = armSocketStartOffset)) {
+  socketCircle = circle(start = [var 12mm, var 35mm], center = [var 0mm, var 35mm])
+
+  horizontal([
+    socketCircle.center,
+    socketCircle.start
+  ])
+  diameter(socketCircle) == armSocketDiameter
+  horizontalDistance([ORIGIN, socketCircle.center]) == 0mm
+  verticalDistance([ORIGIN, socketCircle.center]) == armSocketCenterZ
+}
+
+negativeYSocketProfile = sketch(on = offsetPlane(XZ, offset = -armSocketStartOffset)) {
+  socketCircle = circle(start = [var 12mm, var 35mm], center = [var 0mm, var 35mm])
+
+  horizontal([
+    socketCircle.center,
+    socketCircle.start
+  ])
+  diameter(socketCircle) == armSocketDiameter
+  horizontalDistance([ORIGIN, socketCircle.center]) == 0mm
+  verticalDistance([ORIGIN, socketCircle.center]) == armSocketCenterZ
+}
+
+antennaHoleProfile = sketch(on = offsetPlane(XY, offset = antennaHoleCutStartZ)) {
+  frontLeftHole = circle(start = [var -14.4mm, var 11mm], center = [var -16mm, var 11mm])
+  frontRightHole = circle(start = [var 17.6mm, var 11mm], center = [var 16mm, var 11mm])
+  rearLeftHole = circle(start = [var -14.4mm, var -11mm], center = [var -16mm, var -11mm])
+  rearRightHole = circle(start = [var 17.6mm, var -11mm], center = [var 16mm, var -11mm])
+
+  horizontal([
+    frontLeftHole.center,
+    frontLeftHole.start
+  ])
+  horizontal([
+    frontRightHole.center,
+    frontRightHole.start
+  ])
+  horizontal([
+    rearLeftHole.center,
+    rearLeftHole.start
+  ])
+  horizontal([
+    rearRightHole.center,
+    rearRightHole.start
+  ])
+
+  diameter(frontLeftHole) == antennaHoleDiameter
+  diameter(frontRightHole) == antennaHoleDiameter
+  diameter(rearLeftHole) == antennaHoleDiameter
+  diameter(rearRightHole) == antennaHoleDiameter
+
+  horizontalDistance([ORIGIN, frontLeftHole.center]) == -antennaHoleSpacingX / 2
+  verticalDistance([ORIGIN, frontLeftHole.center]) == antennaHoleSpacingY / 2
+  horizontalDistance([ORIGIN, frontRightHole.center]) == antennaHoleSpacingX / 2
+  verticalDistance([ORIGIN, frontRightHole.center]) == antennaHoleSpacingY / 2
+  horizontalDistance([ORIGIN, rearLeftHole.center]) == -antennaHoleSpacingX / 2
+  verticalDistance([ORIGIN, rearLeftHole.center]) == -antennaHoleSpacingY / 2
+  horizontalDistance([ORIGIN, rearRightHole.center]) == antennaHoleSpacingX / 2
+  verticalDistance([ORIGIN, rearRightHole.center]) == -antennaHoleSpacingY / 2
+}
+
+payloadHoleProfile = sketch(on = offsetPlane(XY, offset = payloadHoleCutStartZ)) {
+  frontLeftHole = circle(start = [var -22.9mm, var 18mm], center = [var -25mm, var 18mm])
+  frontRightHole = circle(start = [var 27.1mm, var 18mm], center = [var 25mm, var 18mm])
+  rearLeftHole = circle(start = [var -22.9mm, var -18mm], center = [var -25mm, var -18mm])
+  rearRightHole = circle(start = [var 27.1mm, var -18mm], center = [var 25mm, var -18mm])
+
+  horizontal([
+    frontLeftHole.center,
+    frontLeftHole.start
+  ])
+  horizontal([
+    frontRightHole.center,
+    frontRightHole.start
+  ])
+  horizontal([
+    rearLeftHole.center,
+    rearLeftHole.start
+  ])
+  horizontal([
+    rearRightHole.center,
+    rearRightHole.start
+  ])
+
+  diameter(frontLeftHole) == payloadHoleDiameter
+  diameter(frontRightHole) == payloadHoleDiameter
+  diameter(rearLeftHole) == payloadHoleDiameter
+  diameter(rearRightHole) == payloadHoleDiameter
+
+  horizontalDistance([ORIGIN, frontLeftHole.center]) == -payloadHoleSpacingX / 2
+  verticalDistance([ORIGIN, frontLeftHole.center]) == payloadHoleSpacingY / 2
+  horizontalDistance([ORIGIN, frontRightHole.center]) == payloadHoleSpacingX / 2
+  verticalDistance([ORIGIN, frontRightHole.center]) == payloadHoleSpacingY / 2
+  horizontalDistance([ORIGIN, rearLeftHole.center]) == -payloadHoleSpacingX / 2
+  verticalDistance([ORIGIN, rearLeftHole.center]) == -payloadHoleSpacingY / 2
+  horizontalDistance([ORIGIN, rearRightHole.center]) == payloadHoleSpacingX / 2
+  verticalDistance([ORIGIN, rearRightHole.center]) == -payloadHoleSpacingY / 2
+}
+
+bottomRegion = region(point = [0mm, 0mm], sketch = bottomProfile)
+middleRegion = region(point = [0mm, 0mm], sketch = middleProfile)
+topRegion = region(point = [0mm, 0mm], sketch = topProfile)
+antennaPadRegion = region(point = [0mm, 0mm], sketch = antennaPadProfile)
+positiveXSocketRegion = region(point = [0mm, 35mm], sketch = positiveXSocketProfile)
+negativeXSocketRegion = region(point = [0mm, 35mm], sketch = negativeXSocketProfile)
+positiveYSocketRegion = region(point = [0mm, 35mm], sketch = positiveYSocketProfile)
+negativeYSocketRegion = region(point = [0mm, 35mm], sketch = negativeYSocketProfile)
+antennaHoleRegion1 = region(point = [-16mm, 11mm], sketch = antennaHoleProfile)
+antennaHoleRegion2 = region(point = [16mm, 11mm], sketch = antennaHoleProfile)
+antennaHoleRegion3 = region(point = [-16mm, -11mm], sketch = antennaHoleProfile)
+antennaHoleRegion4 = region(point = [16mm, -11mm], sketch = antennaHoleProfile)
+payloadHoleRegion1 = region(point = [-25mm, 18mm], sketch = payloadHoleProfile)
+payloadHoleRegion2 = region(point = [25mm, 18mm], sketch = payloadHoleProfile)
+payloadHoleRegion3 = region(point = [-25mm, -18mm], sketch = payloadHoleProfile)
+payloadHoleRegion4 = region(point = [25mm, -18mm], sketch = payloadHoleProfile)
+
+facetedBodyBlank = loft([bottomRegion, middleRegion, topRegion], vDegree = 1, bodyType = SOLID)
+gnssAntennaPad = extrude(antennaPadRegion, length = antennaPadHeight)
+bodyWithAntennaPad = union([facetedBodyBlank, gnssAntennaPad])
+
+searchRescueDroneBody = appearance(
+  subtract(
+    bodyWithAntennaPad,
+    tools = [
+      extrude(positiveXSocketRegion, length = armSocketCutDepth),
+      extrude(negativeXSocketRegion, length = -armSocketCutDepth),
+      extrude(positiveYSocketRegion, length = armSocketCutDepth),
+      extrude(negativeYSocketRegion, length = -armSocketCutDepth),
+      extrude(
+        [
+          antennaHoleRegion1,
+          antennaHoleRegion2,
+          antennaHoleRegion3,
+          antennaHoleRegion4
+        ],
+        length = antennaHoleCutLength,
+      ),
+      extrude(
+        [
+          payloadHoleRegion1,
+          payloadHoleRegion2,
+          payloadHoleRegion3,
+          payloadHoleRegion4
+        ],
+        length = payloadHoleCutDepth,
+      )
+    ],
+  ),
+  color = "#1c2227",
+  metalness = 0,
+  roughness = 48,
+)
+
+hide(bottomProfile)
+hide(middleProfile)
+hide(topProfile)
+hide(antennaPadProfile)
+hide(positiveXSocketProfile)
+hide(negativeXSocketProfile)
+hide(positiveYSocketProfile)
+hide(negativeYSocketProfile)
+hide(antennaHoleProfile)
+hide(payloadHoleProfile)
+
+searchRescueDroneBody

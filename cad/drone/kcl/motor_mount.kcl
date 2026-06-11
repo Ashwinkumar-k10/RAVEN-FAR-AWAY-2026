@@ -1,0 +1,73 @@
+// Brushless motor mounting plate
+// Single circular plate with M3 quadcopter bolt pattern and central cable hole.
+@settings(defaultLengthUnit = mm, kclVersion = 2.0)
+
+plateDiameter = 40mm
+plateRadius = plateDiameter / 2
+plateThickness = 3mm
+m3ClearanceDiameter = 3.2mm
+m3ClearanceRadius = m3ClearanceDiameter / 2
+centralCableHoleDiameter = 10mm
+centralCableHoleRadius = centralCableHoleDiameter / 2
+boltPatternX = 16mm
+boltPatternY = 19mm
+
+plateProfile = sketch(on = XY) {
+  outerCircle = circle(start = [var 20mm, var 0mm], center = [var 0mm, var 0mm])
+  cableHole = circle(start = [var 5mm, var 0mm], center = [var 0mm, var 0mm])
+  upperRightBolt = circle(start = [var 9.6mm, var 9.5mm], center = [var 8mm, var 9.5mm])
+  upperLeftBolt = circle(start = [var -6.4mm, var 9.5mm], center = [var -8mm, var 9.5mm])
+  lowerLeftBolt = circle(start = [var -6.4mm, var -9.5mm], center = [var -8mm, var -9.5mm])
+  lowerRightBolt = circle(start = [var 9.6mm, var -9.5mm], center = [var 8mm, var -9.5mm])
+
+  coincident([outerCircle.center, ORIGIN])
+  coincident([cableHole.center, ORIGIN])
+
+  radius(outerCircle) == plateRadius
+  radius(cableHole) == centralCableHoleRadius
+  radius(upperRightBolt) == m3ClearanceRadius
+  radius(upperLeftBolt) == m3ClearanceRadius
+  radius(lowerLeftBolt) == m3ClearanceRadius
+  radius(lowerRightBolt) == m3ClearanceRadius
+
+  horizontal([outerCircle.center, outerCircle.start])
+  horizontal([cableHole.center, cableHole.start])
+  horizontal([
+    upperRightBolt.center,
+    upperRightBolt.start
+  ])
+  horizontal([
+    upperLeftBolt.center,
+    upperLeftBolt.start
+  ])
+  horizontal([
+    lowerLeftBolt.center,
+    lowerLeftBolt.start
+  ])
+  horizontal([
+    lowerRightBolt.center,
+    lowerRightBolt.start
+  ])
+
+  horizontalDistance([ORIGIN, upperRightBolt.center]) == boltPatternX / 2
+  verticalDistance([ORIGIN, upperRightBolt.center]) == boltPatternY / 2
+  horizontalDistance([ORIGIN, upperLeftBolt.center]) == -boltPatternX / 2
+  verticalDistance([ORIGIN, upperLeftBolt.center]) == boltPatternY / 2
+  horizontalDistance([ORIGIN, lowerLeftBolt.center]) == -boltPatternX / 2
+  verticalDistance([ORIGIN, lowerLeftBolt.center]) == -boltPatternY / 2
+  horizontalDistance([ORIGIN, lowerRightBolt.center]) == boltPatternX / 2
+  verticalDistance([ORIGIN, lowerRightBolt.center]) == -boltPatternY / 2
+}
+
+plateRegion = region(point = [18mm, 0mm], sketch = plateProfile)
+
+brushlessMotorMountingPlate = appearance(
+  extrude(plateRegion, length = plateThickness),
+  color = "#2d3338",
+  metalness = 0,
+  roughness = 55,
+)
+
+hide(plateProfile)
+
+brushlessMotorMountingPlate

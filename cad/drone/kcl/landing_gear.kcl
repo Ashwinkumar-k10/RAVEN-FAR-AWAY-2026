@@ -1,0 +1,186 @@
+// Quadcopter landing leg
+// Lightweight curved landing leg with swept spring struts and a top mounting bracket.
+@settings(defaultLengthUnit = mm, kclVersion = 2.0)
+
+legThickness = 14mm
+footPadHeight = 10mm
+footPadWidth = 12mm
+bracketWidth = 40mm
+bracketBottomZ = 138mm
+bracketHeight = 12mm
+strutDiameter = 9mm
+bracketHoleDiameter = 4.2mm
+bracketHoleSpacing = 24mm
+holeCutLength = legThickness + 2mm
+
+bracketProfile = sketch(on = XZ) {
+  bottom = line(start = [var -20mm, var 138mm], end = [var 20mm, var 138mm])
+  right = line(start = [var 20mm, var 138mm], end = [var 20mm, var 150mm])
+  top = line(start = [var 20mm, var 150mm], end = [var -20mm, var 150mm])
+  left = line(start = [var -20mm, var 150mm], end = [var -20mm, var 138mm])
+
+  coincident([bottom.end, right.start])
+  coincident([right.end, top.start])
+  coincident([top.end, left.start])
+  coincident([left.end, bottom.start])
+
+  horizontal(bottom)
+  vertical(right)
+  horizontal(top)
+  vertical(left)
+
+  horizontalDistance([ORIGIN, bottom.start]) == -bracketWidth / 2
+  verticalDistance([ORIGIN, bottom.start]) == bracketBottomZ
+  horizontalDistance([bottom.start, bottom.end]) == bracketWidth
+  verticalDistance([right.start, right.end]) == bracketHeight
+}
+
+leftFootProfile = sketch(on = XZ) {
+  bottom = line(start = [var -30mm, var 0mm], end = [var -18mm, var 0mm])
+  right = line(start = [var -18mm, var 0mm], end = [var -18mm, var 10mm])
+  top = line(start = [var -18mm, var 10mm], end = [var -30mm, var 10mm])
+  left = line(start = [var -30mm, var 10mm], end = [var -30mm, var 0mm])
+
+  coincident([bottom.end, right.start])
+  coincident([right.end, top.start])
+  coincident([top.end, left.start])
+  coincident([left.end, bottom.start])
+
+  horizontal(bottom)
+  vertical(right)
+  horizontal(top)
+  vertical(left)
+
+  horizontalDistance([ORIGIN, bottom.start]) == -30mm
+  verticalDistance([ORIGIN, bottom.start]) == 0mm
+  horizontalDistance([bottom.start, bottom.end]) == footPadWidth
+  verticalDistance([right.start, right.end]) == footPadHeight
+}
+
+rightFootProfile = sketch(on = XZ) {
+  bottom = line(start = [var 18mm, var 0mm], end = [var 30mm, var 0mm])
+  right = line(start = [var 30mm, var 0mm], end = [var 30mm, var 10mm])
+  top = line(start = [var 30mm, var 10mm], end = [var 18mm, var 10mm])
+  left = line(start = [var 18mm, var 10mm], end = [var 18mm, var 0mm])
+
+  coincident([bottom.end, right.start])
+  coincident([right.end, top.start])
+  coincident([top.end, left.start])
+  coincident([left.end, bottom.start])
+
+  horizontal(bottom)
+  vertical(right)
+  horizontal(top)
+  vertical(left)
+
+  horizontalDistance([ORIGIN, bottom.start]) == 18mm
+  verticalDistance([ORIGIN, bottom.start]) == 0mm
+  horizontalDistance([bottom.start, bottom.end]) == footPadWidth
+  verticalDistance([right.start, right.end]) == footPadHeight
+}
+
+leftStrutProfile = sketch(on = offsetPlane(YZ, offset = -21mm)) {
+  strutCircle = circle(start = [var 4.5mm, var 8mm], center = [var 0mm, var 8mm])
+
+  horizontalDistance([ORIGIN, strutCircle.center]) == 0mm
+  verticalDistance([ORIGIN, strutCircle.center]) == 8mm
+  diameter(strutCircle) == strutDiameter
+  horizontal([strutCircle.center, strutCircle.start])
+}
+
+rightStrutProfile = sketch(on = offsetPlane(YZ, offset = 21mm)) {
+  strutCircle = circle(start = [var 4.5mm, var 8mm], center = [var 0mm, var 8mm])
+
+  horizontalDistance([ORIGIN, strutCircle.center]) == 0mm
+  verticalDistance([ORIGIN, strutCircle.center]) == 8mm
+  diameter(strutCircle) == strutDiameter
+  horizontal([strutCircle.center, strutCircle.start])
+}
+
+leftStrutPath = sketch(on = XZ) {
+  leftArc = arc(start = [var -21mm, var 8mm], end = [var -14mm, var 138mm], center = [var -70.53mm, var 75.85mm])
+
+  horizontalDistance([ORIGIN, leftArc.start]) == -21mm
+  verticalDistance([ORIGIN, leftArc.start]) == 8mm
+  horizontalDistance([ORIGIN, leftArc.end]) == -14mm
+  verticalDistance([ORIGIN, leftArc.end]) == bracketBottomZ
+  horizontalDistance([ORIGIN, leftArc.center]) == -70.53mm
+}
+
+rightStrutPath = sketch(on = XZ) {
+  rightArc = arc(start = [var 21mm, var 8mm], end = [var 14mm, var 138mm], center = [var 70.53mm, var 75.85mm])
+
+  horizontalDistance([ORIGIN, rightArc.start]) == 21mm
+  verticalDistance([ORIGIN, rightArc.start]) == 8mm
+  horizontalDistance([ORIGIN, rightArc.end]) == 14mm
+  verticalDistance([ORIGIN, rightArc.end]) == bracketBottomZ
+  horizontalDistance([ORIGIN, rightArc.center]) == 70.53mm
+}
+
+bracketHoleProfile = sketch(on = offsetPlane(XZ, offset = -holeCutLength / 2)) {
+  leftBracketHole = circle(start = [var -9.9mm, var 145mm], center = [var -12mm, var 145mm])
+  rightBracketHole = circle(start = [var 14.1mm, var 145mm], center = [var 12mm, var 145mm])
+
+  horizontal([
+    leftBracketHole.center,
+    leftBracketHole.start
+  ])
+  horizontal([
+    rightBracketHole.center,
+    rightBracketHole.start
+  ])
+  diameter(leftBracketHole) == bracketHoleDiameter
+  diameter(rightBracketHole) == bracketHoleDiameter
+  horizontalDistance([ORIGIN, leftBracketHole.center]) == -bracketHoleSpacing / 2
+  horizontalDistance([ORIGIN, rightBracketHole.center]) == bracketHoleSpacing / 2
+  verticalDistance([ORIGIN, leftBracketHole.center]) == 145mm
+  verticalDistance([ORIGIN, rightBracketHole.center]) == 145mm
+}
+
+bracketRegion = region(point = [0mm, 144mm], sketch = bracketProfile)
+leftFootRegion = region(point = [-24mm, 5mm], sketch = leftFootProfile)
+rightFootRegion = region(point = [24mm, 5mm], sketch = rightFootProfile)
+leftStrutRegion = region(point = [0mm, 8mm], sketch = leftStrutProfile)
+rightStrutRegion = region(point = [0mm, 8mm], sketch = rightStrutProfile)
+leftBracketHoleRegion = region(point = [-12mm, 145mm], sketch = bracketHoleProfile)
+rightBracketHoleRegion = region(point = [12mm, 145mm], sketch = bracketHoleProfile)
+
+bracketBody = extrude(bracketRegion, length = legThickness, symmetric = true)
+leftFootBody = extrude(leftFootRegion, length = legThickness, symmetric = true)
+rightFootBody = extrude(rightFootRegion, length = legThickness, symmetric = true)
+leftStrutBody = sweep(leftStrutRegion, path = leftStrutPath.leftArc)
+rightStrutBody = sweep(rightStrutRegion, path = rightStrutPath.rightArc)
+
+leftLegHalf = union([leftFootBody, leftStrutBody])
+rightLegHalf = union([rightFootBody, rightStrutBody])
+legWithLeftHalf = union([bracketBody, leftLegHalf])
+landingLegBase = union([legWithLeftHalf, rightLegHalf])
+
+lightweightLandingLeg = appearance(
+  subtract(
+    landingLegBase,
+    tools = [
+      extrude(
+        [
+          leftBracketHoleRegion,
+          rightBracketHoleRegion
+        ],
+        length = holeCutLength,
+      )
+    ],
+  ),
+  color = "#23282d",
+  metalness = 0,
+  roughness = 72,
+)
+
+hide(bracketProfile)
+hide(leftFootProfile)
+hide(rightFootProfile)
+hide(leftStrutProfile)
+hide(rightStrutProfile)
+hide(leftStrutPath)
+hide(rightStrutPath)
+hide(bracketHoleProfile)
+
+lightweightLandingLeg

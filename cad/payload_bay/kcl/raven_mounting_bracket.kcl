@@ -1,0 +1,130 @@
+// L-shaped mounting bracket
+// Bent angle bracket with centered mounting holes and outside-edge chamfers.
+@settings(defaultLengthUnit = mm)
+
+bracketWidth = 15
+verticalArmHeight = 12
+horizontalArmLength = 12
+bracketThickness = 2.5
+holeDiameter = 3.2
+holeRadius = holeDiameter / 2
+edgeChamfer = 0.5
+csgOverlap = 0.5
+halfWidth = bracketWidth / 2
+notchSize = horizontalArmLength - bracketThickness
+
+outerBoxProfile = sketch(on = XZ) {
+  bottomEdge = line(start = [var 0mm, var 0mm], end = [var 10mm, var 0mm])
+  rightEdge = line(start = [var 10mm, var 0mm], end = [var 10mm, var 10mm])
+  topEdge = line(start = [var 10mm, var 10mm], end = [var 0mm, var 10mm])
+  leftEdge = line(start = [var 0mm, var 10mm], end = [var 0mm, var 0mm])
+
+  coincident([bottomEdge.start, ORIGIN])
+  coincident([bottomEdge.end, rightEdge.start])
+  coincident([rightEdge.end, topEdge.start])
+  coincident([topEdge.end, leftEdge.start])
+  coincident([leftEdge.end, bottomEdge.start])
+
+  horizontal(bottomEdge)
+  vertical(rightEdge)
+  horizontal(topEdge)
+  vertical(leftEdge)
+
+  horizontalDistance([bottomEdge.start, bottomEdge.end]) == horizontalArmLength
+  verticalDistance([rightEdge.start, rightEdge.end]) == verticalArmHeight
+}
+outerBoxRegion = region(point = [1mm, 1mm], sketch = outerBoxProfile)
+outerBox = extrude(outerBoxRegion, length = bracketWidth, symmetric = true)
+
+chamferedOuterBox = chamfer(
+  outerBox,
+  length = edgeChamfer,
+  tags = [
+    outerBox.sketch.tags.bottomEdge,
+    outerBox.sketch.tags.rightEdge,
+    outerBox.sketch.tags.topEdge,
+    outerBox.sketch.tags.leftEdge,
+    getOppositeEdge(outerBox.sketch.tags.bottomEdge),
+    getOppositeEdge(outerBox.sketch.tags.rightEdge),
+    getOppositeEdge(outerBox.sketch.tags.topEdge),
+    getOppositeEdge(outerBox.sketch.tags.leftEdge),
+    getNextAdjacentEdge(outerBox.sketch.tags.bottomEdge),
+    getPreviousAdjacentEdge(outerBox.sketch.tags.bottomEdge),
+    getNextAdjacentEdge(outerBox.sketch.tags.rightEdge),
+    getPreviousAdjacentEdge(outerBox.sketch.tags.topEdge)
+  ],
+)
+
+notchProfile = sketch(on = XZ) {
+  bottomEdge = line(start = [var 2.5mm, var 2.5mm], end = [var 10mm, var 2.5mm])
+  rightEdge = line(start = [var 10mm, var 2.5mm], end = [var 10mm, var 10mm])
+  topEdge = line(start = [var 10mm, var 10mm], end = [var 2.5mm, var 10mm])
+  leftEdge = line(start = [var 2.5mm, var 10mm], end = [var 2.5mm, var 2.5mm])
+
+  coincident([bottomEdge.end, rightEdge.start])
+  coincident([rightEdge.end, topEdge.start])
+  coincident([topEdge.end, leftEdge.start])
+  coincident([leftEdge.end, bottomEdge.start])
+
+  horizontal(bottomEdge)
+  vertical(rightEdge)
+  horizontal(topEdge)
+  vertical(leftEdge)
+
+  horizontalDistance([ORIGIN, bottomEdge.start]) == bracketThickness
+  verticalDistance([ORIGIN, bottomEdge.start]) == bracketThickness
+  horizontalDistance([bottomEdge.start, bottomEdge.end]) == notchSize
+  verticalDistance([rightEdge.start, rightEdge.end]) == notchSize
+}
+notchRegion = region(point = [6mm, 6mm], sketch = notchProfile)
+notchCutter = extrude(notchRegion, length = bracketWidth + 2 * csgOverlap, symmetric = true)
+
+bracketWithoutHoles = subtract(chamferedOuterBox, tools = [notchCutter])
+
+verticalHolePlane = {
+  origin = [-csgOverlap, 0mm, 0mm],
+  xAxis = [0, 1, 0],
+  yAxis = [0, 0, 1]
+}
+verticalHoleSketch = sketch(on = verticalHolePlane) {
+  hole = circle(start = [var 2mm, var 6mm], center = [var 0mm, var 5mm])
+
+  horizontal([hole.center, hole.start])
+  horizontalDistance([ORIGIN, hole.center]) == 0
+  verticalDistance([ORIGIN, hole.center]) == verticalArmHeight / 2
+  radius(hole) == holeRadius
+}
+verticalHoleRegion = region(point = [0mm, 6mm], sketch = verticalHoleSketch)
+verticalHoleCutter = extrude(verticalHoleRegion, length = bracketThickness + 2 * csgOverlap)
+
+horizontalHolePlane = {
+  origin = [0mm, 0mm, -csgOverlap],
+  xAxis = [1, 0, 0],
+  yAxis = [0, 1, 0]
+}
+horizontalHoleSketch = sketch(on = horizontalHolePlane) {
+  hole = circle(start = [var 8mm, var 0mm], center = [var 5mm, var 0mm])
+
+  horizontal([hole.center, hole.start])
+  horizontalDistance([ORIGIN, hole.center]) == horizontalArmLength / 2
+  verticalDistance([ORIGIN, hole.center]) == 0
+  radius(hole) == holeRadius
+}
+horizontalHoleRegion = region(point = [6mm, 0mm], sketch = horizontalHoleSketch)
+horizontalHoleCutter = extrude(horizontalHoleRegion, length = bracketThickness + 2 * csgOverlap)
+
+mountingBracket = subtract(
+  bracketWithoutHoles,
+  tools = [
+    verticalHoleCutter,
+    horizontalHoleCutter
+  ],
+)
+  |> appearance(color = "#70767e", roughness = 82, metalness = 0)
+
+hide(outerBoxProfile)
+hide(notchProfile)
+hide(verticalHoleSketch)
+hide(horizontalHoleSketch)
+
+mountingBracket
